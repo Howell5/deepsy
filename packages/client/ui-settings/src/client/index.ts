@@ -23,8 +23,9 @@ import { SettingsScopeBinder } from './settings-scope.ts'
 import { SettingsDescribeMirror } from './settings-mirror.ts'
 
 export type {
-  SettingsGeneralItemOwnerProps, SettingsHeaderOwnerProps, SettingsOnboardingOwnerProps,
-  SettingsPluginsTabOwnerProps, SettingsSectionOwnerProps, SettingsTriggerOwnerProps,
+  SettingsFooterOwnerProps, SettingsGeneralItemOwnerProps, SettingsHeaderOwnerProps,
+  SettingsOnboardingOwnerProps, SettingsPluginsTabOwnerProps, SettingsSectionOwnerProps,
+  SettingsTriggerOwnerProps,
 } from './contract/slots.ts'
 export type { SettingsScopeController, SettingsScopeBinder } from './settings-scope.ts'
 export type { SettingsSchemaService } from './schema.ts'
