@@ -32,10 +32,7 @@ Directories layer as follows:
 - `apps/` holds the externally exported applications, assembled from Client / Host mixtures.
     - `apps/web` (`dsh-web-frontend`) is the vite application: a thin `main.ts` over the shell API exported by `dsh-client-web`.
     - `apps/cli` (`@deepseek-ai/dsh`) dispatches commands: `dsh web` = Host + webserver + the built `dsh-web-frontend` dist; `dsh --profile headless` = [a direct core Agent/Session entry point](2026-08-09-headless-direct-core-entry-point.md), with zero Host, HTTP, or browser layer.
-    - The Electron application reuses the same web client packages. Its first
-      bootstrap uses the Web carrier on an OS-assigned loopback port; the
-      production-hardening target remains an IPC fetch carrier, as recorded in
-      the [desktop bootstrap note](2026-08-14-electron-desktop-bootstrap.md).
+    - The Electron application reuses the same web client packages. Its first bootstrap uses the Web carrier on an OS-assigned loopback port; the production-hardening target remains an IPC fetch carrier, as recorded in the [desktop bootstrap note](2026-08-14-electron-desktop-bootstrap.md).
 
 ```
 apps/*  (applications: apps/web = vite app, apps/cli = bin dispatch)

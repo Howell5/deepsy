@@ -34,6 +34,7 @@ async function createRuntime(): Promise<SlotTestRuntime> {
   runtime.provide('connection', {
     hostDescription: { getSnapshot: () => undefined, subscribe: () => () => {} },
   })
+  runtime.provide('layout', { selectApplication: () => {} })
   const locale = new LocaleRuntime(runtime.ctx)
   runtime.provide('locale', locale)
   runtime.slots.installLocale(locale)

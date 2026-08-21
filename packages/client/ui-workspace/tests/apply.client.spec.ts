@@ -27,6 +27,7 @@ async function bench() {
   const renameSession = vi.fn(async (title: string) => ({ ok: true, value: { title, seq: 1 } }))
   const binding = vi.fn(() => ({ session: { rename: renameSession } }))
   const fork = vi.fn(async () => 'forked' as never)
+  const selectApplication = vi.fn()
   ctx.provide('workspaces', {
     create, startSession, rename, insertSessionBefore,
   } as never)
@@ -34,6 +35,7 @@ async function bench() {
   ctx.provide('connection', {
     hostDescription: { getSnapshot: () => undefined, subscribe: () => () => {} },
   } as never)
+  ctx.provide('layout', { selectApplication } as never)
   const locale = new LocaleRuntime(ctx)
   // These specs assert the shipped Chinese copy. There is no jsdom `window`
   // in this lane, so browser-language detection never runs and the locale
@@ -42,7 +44,7 @@ async function bench() {
   ctx.provide('locale', locale)
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, startSession, rename,
-    insertSessionBefore, open, clear, search, renameSession, binding, fork,
+    insertSessionBefore, open, clear, search, renameSession, binding, fork, selectApplication,
   }
 }
 
@@ -56,7 +58,7 @@ function declare(slots: SlotRegistry, ...names: HoleName[]): () => void {
 
 describe('ui-workspace apply', () => {
   it('declares the services it drives', () => {
-    expect(inject).toEqual(['slots', 'sessions', 'workspaces', 'locale', 'connection'])
+    expect(inject).toEqual(['slots', 'layout', 'sessions', 'workspaces', 'locale', 'connection'])
   })
 
   it('registers browser and pickers for declarations arriving before or after apply', async () => {
@@ -85,10 +87,12 @@ describe('ui-workspace apply', () => {
     const browser = (b.slots.entries('sidebar.workspaces')[0]!.inject as () => WorkspaceBrowserInjected)()
     // Both arms delegate to the runtime's shared New Session action.
     browser.startSession('ws' as never)
+    expect(b.selectApplication).toHaveBeenCalledWith('conversation')
     expect(b.startSession).toHaveBeenCalledWith('ws')
     browser.startSession()
     expect(b.startSession).toHaveBeenLastCalledWith(undefined)
     browser.open('session' as never)
+    expect(b.selectApplication).toHaveBeenLastCalledWith('conversation')
     expect(b.open).toHaveBeenCalledWith('session')
     const signal = new AbortController().signal
     await expect(browser.searchSessions('match', signal)).resolves.toEqual({
