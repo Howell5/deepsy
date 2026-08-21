@@ -102,6 +102,12 @@ importers:
       publint:
         specifier: ^0.3.21
         version: 0.3.21
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
       smol-toml:
         specifier: ^1.7.1
         version: 1.7.1
@@ -981,6 +987,9 @@ importers:
       '@deepseek-ai/dsh-typert-registry':
         specifier: workspace:^
         version: link:../../typert/registry
+      '@deepseek-ai/dsh-widgets':
+        specifier: workspace:^
+        version: link:../../widget/widgets
 
   packages/attachment/attachment:
     devDependencies:
@@ -1474,6 +1483,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-user-questions':
         specifier: workspace:^
         version: link:../../client/ui-user-questions
+      '@deepseek-ai/dsh-client-ui-widgets':
+        specifier: workspace:^
+        version: link:../../client/ui-widgets
       '@deepseek-ai/dsh-client-ui-workflow-run':
         specifier: workspace:^
         version: link:../../client/ui-workflow-run
@@ -1552,6 +1564,12 @@ importers:
       '@deepseek-ai/dsh-web-frontend':
         specifier: workspace:^
         version: link:../../../apps/web
+      '@deepseek-ai/dsh-widgets':
+        specifier: workspace:^
+        version: link:../../widget/widgets
+      '@deepseek-ai/dsh-widgets-local':
+        specifier: workspace:^
+        version: link:../../widget/widgets-local
       '@deepseek-ai/dsh-workspace':
         specifier: workspace:^
         version: link:../../workspace/workspace
@@ -3234,6 +3252,45 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1
 
+  packages/client/ui-widgets:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-api-remotes':
+        specifier: workspace:^
+        version: link:../../api/remotes
+      '@deepseek-ai/dsh-client-locale':
+        specifier: workspace:^
+        version: link:../locale
+      '@deepseek-ai/dsh-client-runtime':
+        specifier: workspace:^
+        version: link:../runtime
+      '@deepseek-ai/dsh-client-ui-conversation':
+        specifier: workspace:^
+        version: link:../ui-conversation
+      '@deepseek-ai/dsh-client-ui-layout':
+        specifier: workspace:^
+        version: link:../ui-layout
+      '@deepseek-ai/dsh-client-ui-primitives':
+        specifier: workspace:^
+        version: link:../ui-primitives
+      '@deepseek-ai/dsh-client-ui-sidebar':
+        specifier: workspace:^
+        version: link:../ui-sidebar
+      '@deepseek-ai/dsh-client-ui-slots':
+        specifier: workspace:^
+        version: link:../ui-slots
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@types/react':
+        specifier: ~18.3.1
+        version: 18.3.31
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
   packages/client/ui-workflow-run:
     devDependencies:
       '@deepseek-ai/cordis':
@@ -3300,6 +3357,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-conversation':
         specifier: workspace:^
         version: link:../ui-conversation
+      '@deepseek-ai/dsh-client-ui-layout':
+        specifier: workspace:^
+        version: link:../ui-layout
       '@deepseek-ai/dsh-client-ui-primitives':
         specifier: workspace:^
         version: link:../ui-primitives
@@ -5166,6 +5226,9 @@ importers:
       '@deepseek-ai/dsh-user-questions':
         specifier: workspace:^
         version: link:../../interaction/user-questions
+      '@deepseek-ai/dsh-widgets':
+        specifier: workspace:^
+        version: link:../../widget/widgets
       '@deepseek-ai/dsh-workspace':
         specifier: workspace:^
         version: link:../../workspace/workspace
@@ -8619,6 +8682,47 @@ importers:
       '@deepseek-ai/dsh-web':
         specifier: workspace:^
         version: link:../web
+
+  packages/widget/widgets:
+    dependencies:
+      zod:
+        specifier: ^4.1.5
+        version: 4.4.3
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-brand':
+        specifier: workspace:^
+        version: link:../../util/brand
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+
+  packages/widget/widgets-local:
+    dependencies:
+      '@deepseek-ai/dsh-atomic-write':
+        specifier: workspace:^
+        version: link:../../util/atomic-write
+      '@deepseek-ai/dsh-home-paths':
+        specifier: workspace:^
+        version: link:../../util/home-paths
+      '@deepseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      chokidar:
+        specifier: ^5.0.0
+        version: 5.0.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@deepseek-ai/dsh-widgets':
+        specifier: workspace:^
+        version: link:../widgets
 
   packages/workflow/tool-ralph:
     dependencies:

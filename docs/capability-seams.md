@@ -65,6 +65,9 @@ flowchart LR
   pkg_workspace["workspace"]
   svc_messageFeedback["ctx.messageFeedback<br/>Lifecycle-bound message feedback"]
   svc_workspaceRegistry["ctx.workspaceRegistry<br/>Workspace entity registry"]
+  pkg_widgets["widgets"]
+  svc_widgets["ctx.widgets<br/>Local static mini-application seam"]
+  pkg_widgets_local["widgets-local"]
   svc_sessionQuery["ctx.sessionQuery<br/>Session reads, traces, filters, and search"]
   pkg_session_reference["session-reference"]
   pkg_tool_session_query["tool-session-query"]
@@ -303,6 +306,8 @@ flowchart LR
   pkg_web_search_exa --> svc_web
   pkg_web_search_perplexity --> svc_web
   pkg_webserver --> svc_webServer
+  pkg_widgets --> svc_widgets
+  pkg_widgets_local --> svc_widgets
   pkg_workflow --> svc_workflowEngine
   pkg_workflow_worker_thread --> svc_workflowEngine
   pkg_workspace --> svc_workspaceRegistry
@@ -417,6 +422,7 @@ flowchart LR
   svc_webServer --> pkg_connection
   svc_webServer --> pkg_hmr
   svc_webServer --> pkg_modules
+  svc_widgets --> pkg_apiproxy
   svc_workflowEngine --> pkg_tool_ralph
   svc_workflowEngine --> pkg_tool_workflow
   svc_workspaceRegistry --> pkg_apiproxy
@@ -442,6 +448,7 @@ flowchart LR
 | `ctx.storageDomain` | `core` | [`storage-domain`](../packages/storage/storage-domain) | - | [`workspace`](../packages/workspace/workspace), [`message-feedback`](../packages/feedback/message-feedback) | - | Waits for every configured backend, then publishes the domain form as one lifecycle-bound service for typed durable state. |
 | `ctx.messageFeedback` | `core` | [`message-feedback`](../packages/feedback/message-feedback) | - | - | - | Owns local per-assistant-message feedback, lifecycle and target validation, per-item compare-and-set, and the Host unary Remote contract without entering Session history or telemetry. |
 | `ctx.workspaceRegistry` | `core` | [`workspace`](../packages/workspace/workspace) | - | `apiproxy` | - | Owns WorkspaceId-branded records over the domain facility; stable sessionIds accounts drive Host RPC and GUI projections. |
+| `ctx.widgets` | `seam` | [`widgets`](../packages/widget/widgets) | [`widgets-local`](../packages/widget/widgets-local) | `apiproxy` | - | The Service Definition owns strict manifests and lifecycle operations; the local provider owns managed files and network policy, while the Host gateway exposes the browser-safe RPC domain. |
 | `ctx.sessionQuery` | `seam` | [`session-query`](../packages/session-query/session-query) | [`session-query-sqlite`](../packages/session-query/session-query-sqlite) | [`session-reference`](../packages/context/session-reference), [`tool-session-query`](../packages/session-query/tool-session-query) | - | The interface supplies exact reads, filters, and traces; its concrete backend adds full-text reconciliation, ranking, snippets, and cursor generations, while the model consumer owns workspace authority and cursor-free rendering. |
 | `ctx.fileReferences` | `seam` | [`file-reference`](../packages/context/file-reference) | [`file-reference-local`](../packages/context/file-reference-local) | - | - | The interface returns path-only completion candidates within the addressed Agent cwd through its unary Remote contract; providers own namespace access and ranking without reading file contents. |
 | `ctx.sessionReferenceResolver` | `core` | [`session-reference`](../packages/context/session-reference) | - | - | - | Projects bounded current-surface conversation snapshots into durable untrusted message context; host adapters own mention syntax. |

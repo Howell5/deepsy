@@ -304,11 +304,16 @@
   flex-direction: column;
 }
 
+.applicationArea,
 .settingsArea,
 .footerActions {
   flex: none;
   min-width: 0;
   width: 100%;
+}
+
+.applicationArea {
+  margin-bottom: 4px;
 }
 
 .footerActions {
@@ -319,6 +324,7 @@
   align-items: center;
 }
 
+.collapsed .applicationArea,
 .collapsed .settingsArea,
 .collapsed .footerActions {
   display: flex;
