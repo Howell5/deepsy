@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-update",
-  "description": "Settings-footer update indicator: checks Deedoo GitHub releases and prompts when a newer packaged version exists",
+  "description": "Settings-footer update indicator: checks deepsy GitHub releases and prompts when a newer packaged version exists",
   "version": "0.1.1-rc.2",
   "publishConfig": {
     "access": "public"

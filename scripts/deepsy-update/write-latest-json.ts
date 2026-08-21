@@ -1,5 +1,5 @@
 /**
- * Deedoo update pipeline — release manifest generation.
+ * deepsy update pipeline — release manifest generation.
  *
  * Writes the machine-readable latest.json that the release workflow attaches
  * to each GitHub Release. The desktop client (M2) reads the newest release's
@@ -9,7 +9,7 @@
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-/** Per-release manifest attached to every Deedoo GitHub Release. */
+/** Per-release manifest attached to every deepsy GitHub Release. */
 export interface ReleaseManifest {
   /** Version packaged in this release. */
   version: string
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   void main().catch((error: unknown) => {
-    console.error(`[deedoo-update] ${error instanceof Error ? error.message : String(error)}`)
+    console.error(`[deepsy-update] ${error instanceof Error ? error.message : String(error)}`)
     process.exit(1)
   })
 }

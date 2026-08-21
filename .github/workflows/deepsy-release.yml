@@ -1,9 +1,9 @@
-# Deedoo zero-cost update pipeline (M1).
+# deepsy zero-cost update pipeline.
 #
 # Watches the upstream npm `latest` dist-tag of @deepseek-ai/dsh (upstream
 # publishes no GitHub Releases or git tags; npm is the authoritative stream).
 # When that tag is strictly newer than the version packaged in this workspace,
-# bumps the dsh release family, builds the unsigned desktop shell, and
+# bumps the dsh release family when needed, builds the desktop shell, and
 # publishes a GitHub Release with the macOS artifacts and the latest.json
 # manifest. macOS-first; Windows NSIS and Linux AppImage packaging is follow-up
 # work. The workflow never triggers on push, so routine commits cannot cause a
@@ -14,7 +14,7 @@
 # - comparison: semver strict greater-than (rc-aware)
 # - release tag: v<target>, prerelease when the target is a prerelease
 # - artifacts: ad-hoc signed DMG + ZIP (mac.identity "-" + hardenedRuntime off)
-name: deedoo-release
+name: deepsy-release
 
 on:
   schedule:
@@ -25,12 +25,16 @@ on:
         description: Check upstream and report only; build and release nothing.
         type: boolean
         default: false
+      release-current:
+        description: Build and publish the version already recorded in the workspace.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: deedoo-release
+  group: deepsy-release
   cancel-in-progress: false
 
 env:
@@ -68,14 +72,19 @@ jobs:
         with:
           script: |
             const { execSync } = require('node:child_process')
-            const run = execSync('node --import tsx/esm scripts/deedoo-update/check-upstream.ts', {
+            const run = execSync('node --import tsx/esm scripts/deepsy-update/check-upstream.ts', {
               encoding: 'utf8',
             })
             const decision = JSON.parse(run.trim())
+            if ('${{ inputs.release-current }}' === 'true') {
+              decision.updateAvailable = true
+              decision.target = decision.current
+            }
             console.log(JSON.stringify(decision, null, 2))
             core.setOutput('updateAvailable', String(decision.updateAvailable))
             core.setOutput('target', decision.target ?? '')
             core.setOutput('current', decision.current)
+            core.setOutput('bumpRequired', String(decision.target !== decision.current))
 
       - name: No update — nothing to do
         if: steps.decision.outputs.updateAvailable != 'true'
@@ -86,11 +95,11 @@ jobs:
         run: 'echo "dry-run: upstream ${{ steps.decision.outputs.target }} is newer than ${{ steps.decision.outputs.current }}; no build."'
 
       - name: Bump dsh release family to target
-        if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
+        if: steps.decision.outputs.updateAvailable == 'true' && steps.decision.outputs.bumpRequired == 'true' && inputs.dry-run != true
         run: |
           TARGET="${{ steps.decision.outputs.target }}"
-          git config user.name 'deedoo-release[bot]'
-          git config user.email 'deedoo-release[bot]@users.noreply.github.com'
+          git config user.name 'deepsy-release[bot]'
+          git config user.email 'deepsy-release[bot]@users.noreply.github.com'
           pnpm run release:dsh "$TARGET"
 
       - name: Build desktop artifacts
@@ -102,7 +111,7 @@ jobs:
           pnpm --filter @deepseek-ai/dsh-desktop run package
 
       - name: Push version bump
-        if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
+        if: steps.decision.outputs.updateAvailable == 'true' && steps.decision.outputs.bumpRequired == 'true' && inputs.dry-run != true
         run: git push origin HEAD
 
       - name: Create GitHub Release
@@ -124,7 +133,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TARGET="${{ steps.decision.outputs.target }}"
-          node --import tsx/esm scripts/deedoo-update/write-latest-json.ts \
+          node --import tsx/esm scripts/deepsy-update/write-latest-json.ts \
             --version="$TARGET" \
             --release-url="${{ steps.release.outputs.url }}" \
             --output=apps/desktop/dist/release/latest.json

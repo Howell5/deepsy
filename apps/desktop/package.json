@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-desktop",
-  "description": "Desktop shell for DeepSeek Harness",
+  "description": "deepsy desktop shell for DeepSeek Harness",
   "version": "0.1.1-rc.2",
   "author": "DeepSeek AI",
   "publishConfig": {
@@ -57,8 +57,8 @@
     "typescript": "^6.0.3"
   },
   "build": {
-    "appId": "ai.deepseek.harness",
-    "productName": "DeepSeek Harness",
+    "appId": "com.howell5.deepsy",
+    "productName": "deepsy",
     "asar": false,
     "directories": {
       "output": "../release"

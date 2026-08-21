@@ -2,9 +2,9 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { UpdateStatus } from '../src/client/UpdateStatus.tsx'
-import type { DeedooRelease } from '../src/client/update-check.ts'
+import type { DeepsyRelease } from '../src/client/update-check.ts'
 
-const release: DeedooRelease = {
+const release: DeepsyRelease = {
   tagName: 'v0.1.0-rc.6',
   htmlUrl: 'https://github.com/Howell5/deepsy/releases/tag/v0.1.0-rc.6',
 }

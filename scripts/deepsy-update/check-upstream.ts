@@ -1,7 +1,7 @@
 /**
- * Deedoo update pipeline — upstream version detection.
+ * deepsy update pipeline — upstream version detection.
  *
- * The Deedoo desktop shell packages the DeepSeek Harness runtime, whose only
+ * The deepsy desktop shell packages the DeepSeek Harness runtime, whose only
  * authoritative release stream is the npm `latest` dist-tag of
  * `@deepseek-ai/dsh` (upstream publishes no GitHub Releases or git tags).
  * This script fetches that tag, compares it to the version currently packaged
@@ -42,7 +42,7 @@ export interface UpdateDecision {
 export async function fetchLatestDistTag(): Promise<string> {
   const response = await fetch(DIST_TAGS_URL, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    headers: { 'User-Agent': 'deedoo-update-pipeline' },
+    headers: { 'User-Agent': 'deepsy-update-pipeline' },
   })
   if (!response.ok) {
     throw new Error(`npm dist-tags request failed with ${response.status}`)
@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   void main().catch((error: unknown) => {
-    console.error(`[deedoo-update] ${error instanceof Error ? error.message : String(error)}`)
+    console.error(`[deepsy-update] ${error instanceof Error ? error.message : String(error)}`)
     process.exit(1)
   })
 }

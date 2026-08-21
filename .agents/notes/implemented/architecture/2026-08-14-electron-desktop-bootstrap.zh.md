@@ -12,7 +12,7 @@ DeepSeek Harness 已有完整的浏览器产品，但当前使用方式假设用
 
 ## Decision
 
-**在 `apps/desktop` 中交付首个 Electron 桌面启动版本。** Electron 提供 Node.js 运行时，因此开发产物与打包应用都不会调用系统 Node 二进制。桌面壳在 Electron Utility Process 中以 `web --port 0` 启动构建后的 `@deepseek-ai/dsh` CLI，并将现有的 `dsh web:` URL 输出作为就绪信号；随后 BrowserWindow 加载未经改写的 Web 客户端。
+**在 `apps/desktop` 中交付 deepsy Electron 应用。** Electron 提供 Node.js 运行时，因此开发产物与打包应用都不会调用系统 Node 二进制。桌面壳在 Electron Utility Process 中以 `web --port 0` 启动构建后的 `@deepseek-ai/dsh` CLI，并将现有的 `dsh web:` URL 输出作为就绪信号；随后 BrowserWindow 加载未经改写的 Web 客户端。
 
 **保持渲染器无特权。** BrowserWindow 启用 Chromium 沙箱与上下文隔离，关闭 Node 集成，保留 Web 安全，拒绝权限请求，阻止子窗口，并仅通过操作系统打开经过协议校验的 HTTP(S) 外链。Harness 页面导航被限制在分配到的回环 origin。
 

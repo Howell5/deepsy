@@ -1,11 +1,11 @@
 /**
- * Deedoo update detection — pure decision logic for the settings-footer
+ * deepsy update detection — pure decision logic for the settings-footer
  * update indicator.
  *
- * The Deedoo desktop shell packages a DeepSeek Harness runtime whose version
+ * The deepsy desktop shell packages a DeepSeek Harness runtime whose version
  * tracks the workspace root. This module decides whether a newer packaged
  * version exists by comparing the running version against the newest release
- * published on the Deedoo GitHub repository. Pure functions only: the fetch
+ * published on the deepsy GitHub repository. Pure functions only: the fetch
  * wrapper is the single wire boundary, and every decision is injectable for
  * tests.
  */
@@ -13,7 +13,7 @@
 import semver from 'semver'
 
 /** One GitHub release, reduced to the fields the indicator needs. */
-export interface DeedooRelease {
+export interface DeepsyRelease {
   /** Release tag, e.g. `v0.1.0-rc.6`. */
   tagName: string
   /** Release page the user opens for the manual download. */
@@ -35,7 +35,7 @@ export interface UpdateInfo {
 /** Version value when the running app version is unknown (web-only mode). */
 export const UNKNOWN_VERSION = '0.0.0'
 
-/** Default endpoint: newest release on the Deedoo repository. */
+/** Default endpoint: newest release on the deepsy repository. */
 export const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/Howell5/deepsy/releases?per_page=1'
 
@@ -57,7 +57,7 @@ export function parseReleaseTag(tag: string): string | null {
  */
 export function resolveUpdateInfo(
   currentVersion: string,
-  releases: readonly DeedooRelease[],
+  releases: readonly DeepsyRelease[],
 ): UpdateInfo {
   for (const release of releases) {
     const latest = parseReleaseTag(release.tagName)
@@ -69,11 +69,11 @@ export function resolveUpdateInfo(
 }
 
 /**
- * Fetch the newest Deedoo release from the GitHub API (CORS-enabled). Wire
+ * Fetch the newest deepsy release from the GitHub API (CORS-enabled). Wire
  * boundary: the response payload is validated before mapping.
  * @returns The newest release, or an empty list when the endpoint yields none.
  */
-export async function fetchDeedooReleases(): Promise<readonly DeedooRelease[]> {
+export async function fetchDeepsyReleases(): Promise<readonly DeepsyRelease[]> {
   const response = await fetch(GITHUB_RELEASES_URL, {
     signal: AbortSignal.timeout(10_000),
     headers: { Accept: 'application/vnd.github+json' },

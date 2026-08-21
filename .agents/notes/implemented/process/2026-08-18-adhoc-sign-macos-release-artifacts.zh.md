@@ -6,11 +6,11 @@ Status: implemented
 
 ## Problem
 
-首个 Deedoo 桌面版本（v0.1.0-rc.7，由 `deedoo-release.yml` 构建）无法打开：macOS 报"DeepSeek Harness 已损坏，无法打开。你应该将它移到废纸篓"。零成本分发决策通过设置 `CSC_IDENTITY_AUTO_DISCOVERY=false` 跳过代码签名，这让 electron-builder 26 返回 null identity 并完全跳过签名。Electron 43 二进制自带 linker 生成的 ad-hoc 签名，要求封存 bundle 资源；没有 bundle 级 `codesign` 步骤就没有 `_CodeSignature/CodeResources`，`codesign --verify` 报 "code has no resources but signature indicates they must be present"。Gatekeeper 把这种无效的半签名状态判定为"已损坏"而非"未验证开发者"，没有任何放行入口。
+首个 deepsy 桌面版本（v0.1.0-rc.7，由 `deepsy-release.yml` 构建）无法打开：macOS 报"deepsy 已损坏，无法打开。你应该将它移到废纸篓"。零成本分发决策通过设置 `CSC_IDENTITY_AUTO_DISCOVERY=false` 跳过代码签名，这让 electron-builder 26 返回 null identity 并完全跳过签名。Electron 43 二进制自带 linker 生成的 ad-hoc 签名，要求封存 bundle 资源；没有 bundle 级 `codesign` 步骤就没有 `_CodeSignature/CodeResources`，`codesign --verify` 报 "code has no resources but signature indicates they must be present"。Gatekeeper 把这种无效的半签名状态判定为"已损坏"而非"未验证开发者"，没有任何放行入口。
 
 ## Decision
 
-`apps/desktop/package.json` 设置 `build.mac.identity: "-"`，让 electron-builder 对整个 bundle（含全部嵌套 helper 与 framework）做 ad-hoc 签名并生成 `_CodeSignature/CodeResources`；同时设置 `build.mac.hardenedRuntime: false`，因为 ad-hoc 签名 + hardened runtime 需要 `com.apple.security.cs.disable-library-validation` entitlement，否则应用启动时会被库校验拦截。`deedoo-release.yml` 保留 `CSC_IDENTITY_AUTO_DISCOVERY=false` 防止本机钥匙串里的意外身份劫持零成本决策；显式 `identity` 本来就会绕过自动发现。结果是有效的 ad-hoc 签名：`codesign --verify` 通过，Gatekeeper 走标准的"无法验证开发者"右键打开路径，`spctl` 报 `rejected` 而非 damaged。已通过对损坏的 rc.7 bundle 执行 `codesign --force --deep --sign -` 验证：`codesign --verify --deep --strict` 与 `spctl` 的结果都如预期变化。
+`apps/desktop/package.json` 设置 `build.mac.identity: "-"`，让 electron-builder 对整个 bundle（含全部嵌套 helper 与 framework）做 ad-hoc 签名并生成 `_CodeSignature/CodeResources`；同时设置 `build.mac.hardenedRuntime: false`，因为 ad-hoc 签名 + hardened runtime 需要 `com.apple.security.cs.disable-library-validation` entitlement，否则应用启动时会被库校验拦截。`deepsy-release.yml` 保留 `CSC_IDENTITY_AUTO_DISCOVERY=false` 防止本机钥匙串里的意外身份劫持零成本决策；显式 `identity` 本来就会绕过自动发现。结果是有效的 ad-hoc 签名：`codesign --verify` 通过，Gatekeeper 走标准的"无法验证开发者"右键打开路径，`spctl` 报 `rejected` 而非 damaged。已通过对损坏的 rc.7 bundle 执行 `codesign --force --deep --sign -` 验证：`codesign --verify --deep --strict` 与 `spctl` 的结果都如预期变化。
 
 ## Alternatives considered
 
