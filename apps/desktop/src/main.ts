@@ -1,5 +1,5 @@
 /**
- * DeepSeek Harness desktop shell.
+ * deepsy desktop shell over the DeepSeek Harness Web client.
  *
  * The renderer remains sandboxed and loads the shipped Web client. The
  * Harness profile runs in an Electron Utility Process so a backend crash does
@@ -24,7 +24,7 @@ import {
   type UtilityProcess,
 } from 'electron'
 
-const APP_NAME = 'DeepSeek Harness'
+const APP_NAME = 'deepsy'
 const BACKEND_READY = /dsh web: (http:\/\/127\.0\.0\.1:\d+)/
 const STARTUP_TIMEOUT_MS = 120_000
 const SHUTDOWN_TIMEOUT_MS = 8_000
@@ -106,7 +106,7 @@ function createWindow(): BrowserWindow {
       sandbox: true,
       webSecurity: true,
       navigateOnDragDrop: false,
-      partition: 'persist:dsh-desktop',
+      partition: 'persist:deepsy',
     },
   })
   configureNavigation(window)
@@ -160,7 +160,7 @@ async function offerRecovery(reason: string): Promise<void> {
   const options = {
     type: 'error' as const,
     title: `${APP_NAME} 启动失败`,
-    message: 'DeepSeek Harness 后端未能启动',
+    message: 'deepsy 后端未能启动',
     detail: backendErrorMessage(reason),
     buttons: ['重试', '退出'],
     defaultId: 0,
@@ -228,7 +228,7 @@ async function startBackend(): Promise<void> {
       DSH_DESKTOP: '1',
     },
     stdio: 'pipe',
-    serviceName: 'DeepSeek Harness Backend',
+    serviceName: 'deepsy Backend',
   })
   backend = child
   child.once('spawn', () => {
@@ -352,7 +352,7 @@ if (!hasSingleInstanceLock) {
 
   app.whenReady().then(async () => {
     installMenu()
-    session.fromPartition('persist:dsh-desktop')
+    session.fromPartition('persist:deepsy')
       .setPermissionRequestHandler((_webContents, _permission, callback) => { callback(false) })
     createWindow()
     await startBackend()

@@ -481,6 +481,26 @@ describe('npm release workflows', () => {
   })
 })
 
+describe('deepsy desktop release workflow', () => {
+  it('can publish the current workspace version without creating a bump commit', () => {
+    const workflow = loadWorkflow('.github/workflows/deepsy-release.yml')
+    const dispatch = workflowEvent(workflow, 'workflow_dispatch')
+    const release = workflowJob(workflow, 'release')
+    if (!isRecord(dispatch.inputs) || !Array.isArray(release.steps)) {
+      throw new TypeError('deepsy release must define dispatch inputs and steps')
+    }
+    expect(dispatch.inputs['release-current']).toMatchObject({ type: 'boolean', default: false })
+    const steps = release.steps.filter(isRecord)
+    const decision = steps.find(step => step.name === 'Check upstream and set outputs')
+    const build = steps.find(step => step.name === 'Build desktop artifacts')
+    const push = steps.find(step => step.name === 'Push version bump')
+    expect(JSON.stringify(decision)).toContain('inputs.release-current')
+    expect(JSON.stringify(decision)).toContain('scripts/deepsy-update/check-upstream.ts')
+    expect(build?.if).toBe('steps.decision.outputs.updateAvailable == \'true\' && inputs.dry-run != true')
+    expect(push?.if).toContain('steps.decision.outputs.bumpRequired == \'true\'')
+  })
+})
+
 describe('Documentation site publication', () => {
   it('keeps Pages deployment dispatch-only from a dsh-v* tag', () => {
     const workflow = loadWorkflow('.github/workflows/docs-pages.yml')

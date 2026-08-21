@@ -1,4 +1,4 @@
-# Deedoo Desktop 分发与首次安装
+# deepsy Desktop 分发与首次安装
 
 零成本分发决策：不购买代码签名证书（无 App Store、无付费 Developer ID），
 依赖包管理器渠道与明确的首次安装说明。详见下文"签名决策"。
@@ -18,7 +18,7 @@
 未签名应用首次打开会被 Gatekeeper 拦截。发布产物一律做 ad-hoc 签名（零成本），
 签名有效、但身份不受信任，所以首次安装走"无法验证开发者"的右键打开路径：
 
-1. 下载 `Deedoo-*.dmg`，双击挂载，把应用拖入"应用程序"
+1. 下载 `deepsy-*.dmg`，双击挂载，把应用拖入"应用程序"
 2. 首次打开：Finder 中找到应用 → **右键（或按住 Control 点击）→ 打开**
 3. 在弹出的对话框点 **"打开"** —— 之后正常双击即可
 
@@ -51,18 +51,18 @@
 ## 更新管线（配套）
 
 - 上游检测：npm `@deepseek-ai/dsh` `latest` dist-tag（`pnpm run update:check`）
-- 自动打包：`.github/workflows/deedoo-release.yml`（每 6h + 手动 dispatch）
+- 自动打包：`.github/workflows/deepsy-release.yml`（每 6h 检查上游；手动 dispatch 可发布工作区当前版本）
 - 用户端提示：设置面板右下角（`settings.footer` 槽位，`@deepseek-ai/dsh-client-ui-update`）
 
 ## Homebrew Cask（规划）
 
 1. Fork [homebrew-cask](https://github.com/Homebrew/homebrew-cask)
-2. 新建 `Casks/d/deedoo.rb`，`cask "deedoo"` 指向 GitHub Release 的 zip
+2. 新建 `Casks/d/deepsy.rb`，`cask "deepsy"` 指向 GitHub Release 的 zip
    URL 与 `sha256`
 3. 提交 PR；Cask 安装后 Gatekeeper 不再拦截（Homebrew 处理 quarantine 属性）
 
 ## winget（规划）
 
 1. 在 [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs) 提交
-   manifest（`manifests/h/Howell5/Deedoo/<version>/`）
+   manifest（`manifests/h/Howell5/deepsy/<version>/`）
 2. 指向 NSIS 安装包 URL + 哈希；发布后 `winget install` 无 SmartScreen 警告

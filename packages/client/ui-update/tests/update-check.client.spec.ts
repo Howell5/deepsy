@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  parseReleaseTag, resolveUpdateInfo, UNKNOWN_VERSION, type DeedooRelease,
+  parseReleaseTag, resolveUpdateInfo, UNKNOWN_VERSION, type DeepsyRelease,
 } from '../src/client/update-check.ts'
 
-function release(tagName: string, url = 'https://github.com/Howell5/deepsy/releases/tag/1'): DeedooRelease {
+function release(tagName: string, url = 'https://github.com/Howell5/deepsy/releases/tag/1'): DeepsyRelease {
   return { tagName, htmlUrl: url }
 }
 

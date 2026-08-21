@@ -12,7 +12,7 @@ The protocol architecture reserved an Electron IPC carrier, but no IPC client, s
 
 ## Decision
 
-**Ship the first desktop bootstrap as an Electron application under `apps/desktop`.** Electron supplies the Node.js runtime, so neither development artifacts nor packaged applications invoke a system Node binary. The shell starts the built `@deepseek-ai/dsh` CLI with `web --port 0` in an Electron Utility Process and treats the existing `dsh web:` URL line as the readiness signal. The browser window then loads the unchanged shipped Web client.
+**Ship deepsy as an Electron application under `apps/desktop`.** Electron supplies the Node.js runtime, so neither development artifacts nor packaged applications invoke a system Node binary. The shell starts the built `@deepseek-ai/dsh` CLI with `web --port 0` in an Electron Utility Process and treats the existing `dsh web:` URL line as the readiness signal. The browser window then loads the unchanged shipped Web client.
 
 **Keep the renderer unprivileged.** The BrowserWindow enables Chromium sandboxing and context isolation, disables Node integration, retains Web security, denies permission requests, blocks child windows, and opens only validated HTTP(S) external links through the operating system. Harness navigation is restricted to the assigned loopback origin.
 

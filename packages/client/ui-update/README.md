@@ -2,11 +2,11 @@
 
 English | [中文](README.zh.md)
 
-Settings-footer update indicator for the Deedoo desktop shell.
+Settings-footer update indicator for the deepsy desktop shell.
 
 ## Purpose
 
-Renders an update hint in the bottom-right of the settings panel when the packaged app version is behind the newest Deedoo GitHub release. Checking and up-to-date states render nothing (zero-noise); an available update renders a link that opens the release page in the system browser.
+Renders an update hint in the bottom-right of the settings panel when the packaged app version is behind the newest deepsy GitHub release. Checking and up-to-date states render nothing (zero-noise); an available update renders a link that opens the release page in the system browser.
 
 ## Behavior
 

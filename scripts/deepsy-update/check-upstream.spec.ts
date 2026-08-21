@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolveUpdateDecision } from './check-upstream.ts'
 
-describe('resolveUpdateDecision', () => {
+describe('deepsy update decision', () => {
   it('detects a newer upstream rc', async () => {
     const decision = await resolveUpdateDecision({ upstream: '0.1.0-rc.6', current: '0.1.0-rc.5' })
     expect(decision.updateAvailable).toBe(true)

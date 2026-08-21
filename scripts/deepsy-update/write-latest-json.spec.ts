@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildReleaseManifest } from './write-latest-json.ts'
 
-describe('buildReleaseManifest', () => {
+describe('deepsy release manifest', () => {
   it('includes version and release url', () => {
     const manifest = buildReleaseManifest('0.1.0-rc.6', 'https://github.com/Howell5/deepsy/releases/tag/v0.1.0-rc.6')
     expect(manifest.version).toBe('0.1.0-rc.6')
