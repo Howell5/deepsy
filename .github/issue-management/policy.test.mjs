@@ -5,6 +5,7 @@ import {
   countVisibleUnits,
   nextResolvingIssueStatus,
   parseReferences,
+  repositoryCoordinates,
   retainIssueReferences,
   resolvingIssueStatusCommand,
   requiresPullRequestPolicy,
@@ -36,6 +37,15 @@ const canonicalKinds = [
   'kind/cleanup',
   'kind/dependency',
 ]
+
+test('resolves the repository receiving the workflow event', () => {
+  assert.deepEqual(repositoryCoordinates('Howell5/deepsy'), {
+    owner: 'Howell5',
+    repository: 'deepsy',
+    slug: 'Howell5/deepsy',
+  })
+  assert.throws(() => repositoryCoordinates('deepsy'), /GITHUB_REPOSITORY/)
+})
 
 // Keep an independent oracle rather than importing the implementation's reserved set.
 const legacyLabels = [

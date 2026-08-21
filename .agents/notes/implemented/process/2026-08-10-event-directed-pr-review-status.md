@@ -18,11 +18,13 @@ Ordinary subscribed pull-request events remain forward-only implementation signa
 
 The handler resolves only exact same-repository `Fixes`, `Closes`, or `Resolves` references. It does not alter terminal statuses, add an Issue with no Project status, depend on PR metadata validity, query `reviewDecision`, reconstruct review rounds, look up pull requests from Issues, or run a scheduled reconciler.
 
+Read-only PR policy requests use the event repository from `GITHUB_REPOSITORY`, so a fork validates its own PR instead of the configured Project repository. Project mutation remains credential-gated: when either GitHub App credential is absent, the workflow keeps the check present but skips token creation and board mutation successfully.
+
 [Issue lifecycle](../../../../.github/workflows/issue-lifecycle.yml) remains unsubscribed from `pull_request.ready_for_review`; neither event command depends on that action. [Issue policy](../../../../.github/workflows/issue-policy.yml) retains `ready_for_review` because it owns required-check enforcement when a human pull request enters review.
 
 ## Verification
 
-[Issue-management tests](../../../../.github/issue-management/policy.test.mjs) pin the event-to-command mapping, the repeated-review-request transition after a changes-requested command, the changes-requested regression, terminal protection, and human override preservation. [Workflow tests](../../../../scripts/ci-workflow.spec.ts) pin the subscribed events, the job-level absence of `if` plus the step-level gate on the token/board steps (so approved/commented reviews pass without minting a token), and the separate `ready_for_review` policy trigger.
+[Issue-management tests](../../../../.github/issue-management/policy.test.mjs) pin event-repository resolution, the event-to-command mapping, the repeated-review-request transition after a changes-requested command, the changes-requested regression, terminal protection, and human override preservation. [Workflow tests](../../../../scripts/ci-workflow.spec.ts) pin the subscribed events, the job-level absence of `if` plus the credential and review-event gates on the token/board steps, and the separate `ready_for_review` policy trigger.
 
 ## Alternatives considered
 
@@ -38,4 +40,4 @@ The handler resolves only exact same-repository `Fixes`, `Closes`, or `Resolves`
 
 A repeated review request moves an automation-managed resolving Issue to `In review` even while GitHub still reports an older blocking review. A later changes-requested review returns it to `In progress`; approval, comments, dismissal, pushes, and reviewer removal leave the most recent command's status unchanged.
 
-The projection remains event-driven and does not repair an event that never runs. Replaying an old workflow run can replay its old command, and ProjectV2 still provides no atomic compare-and-swap between the latest-state read and mutation. Per-pull-request workflow concurrency and the human-ownership guard reduce these races without introducing durable lifecycle state.
+The projection remains event-driven and does not repair an event that never runs. A repository without the configured App credentials receives read-only policy checks but no Project lifecycle projection. Replaying an old workflow run can replay its old command, and ProjectV2 still provides no atomic compare-and-swap between the latest-state read and mutation. Per-pull-request workflow concurrency and the human-ownership guard reduce these races without introducing durable lifecycle state.

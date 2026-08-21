@@ -18,11 +18,13 @@ Issue 生命周期工作流把评审 webhook 视为命令。`pull_request.review
 
 处理器仅解析同一仓库内严格匹配的 `Fixes`、`Closes` 或 `Resolves` 引用。它不会更改终态、将没有 Project 状态的 Issue 添加到 Project、依赖 PR 元数据是否有效、查询 `reviewDecision`、重建评审轮次、从 Issue 反向查找 PR，或运行定时协调器。
 
+只读 PR 策略请求从 `GITHUB_REPOSITORY` 读取事件所属仓库，因此 Fork 会校验自己的 PR，而不是配置中的 Project 仓库。Project 写操作仍由凭据控制：任一 GitHub App 凭据缺失时，工作流保留该检查，但成功跳过 token 创建与看板修改。
+
 [Issue 生命周期](../../../../.github/workflows/issue-lifecycle.yml)仍不订阅 `pull_request.ready_for_review`；两条事件命令均不依赖该动作。[Issue 策略](../../../../.github/workflows/issue-policy.yml)保留 `ready_for_review`，因为人工提交的 PR 进入评审时，该工作流负责执行必需检查门禁。
 
 ## 验证
 
-[Issue 管理测试](../../../../.github/issue-management/policy.test.mjs)锁定事件到命令的映射、请求修改命令后重复请求评审所触发的状态转换、请求修改后的状态回退、终态保护，以及保留人工覆盖状态。[工作流测试](../../../../scripts/ci-workflow.spec.ts)锁定订阅事件、job 级无 `if` 且 token/看板步骤带 step 级门控（使 approved/commented 评审以 pass 呈现且不铸 token），以及独立的 `ready_for_review` 策略触发器。
+[Issue 管理测试](../../../../.github/issue-management/policy.test.mjs)锁定事件仓库解析、事件到命令的映射、请求修改命令后重复请求评审所触发的状态转换、请求修改后的状态回退、终态保护，以及保留人工覆盖状态。[工作流测试](../../../../scripts/ci-workflow.spec.ts)锁定订阅事件、job 级无 `if`、token/看板步骤的凭据与评审事件门控，以及独立的 `ready_for_review` 策略触发器。
 
 ## 考虑过的替代方案
 
@@ -38,4 +40,4 @@ Issue 生命周期工作流把评审 webhook 视为命令。`pull_request.review
 
 即使 GitHub 仍报告一个较早的阻塞性评审，重复请求评审也会将正由当前 PR 解决且由自动化管理的 Issue 推进至 `In review`。后续提出修改要求的评审会将其退回 `In progress`；批准、评论、撤销评审、推送和移除评审人都不会改变最近一条命令设定的状态。
 
-投影仍由事件驱动；如果某个事件从未触发工作流运行，投影不会自行修复。回放旧的工作流运行可能会再次执行其中的旧命令；ProjectV2 仍不提供在读取最新状态与执行变更之间进行原子比较并交换（compare-and-swap）的能力。以单个 PR 为粒度的工作流并发控制和人工状态所有权保护机制可减少这些竞态，而无需引入持久化生命周期状态。
+投影仍由事件驱动；如果某个事件从未触发工作流运行，投影不会自行修复。未配置 App 凭据的仓库仍会执行只读策略检查，但不会投影 Project 生命周期。回放旧的工作流运行可能会再次执行其中的旧命令；ProjectV2 仍不提供在读取最新状态与执行变更之间进行原子比较并交换（compare-and-swap）的能力。以单个 PR 为粒度的工作流并发控制和人工状态所有权保护机制可减少这些竞态，而无需引入持久化生命周期状态。
