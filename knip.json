@@ -626,6 +626,11 @@
         "react-dom"
       ]
     },
+    "apps/desktop": {
+      "ignoreDependencies": [
+        "@deepseek-ai/.+"
+      ]
+    },
     "apps/cli": {
       "entry": [
         "tests/**/*.spec.ts",
