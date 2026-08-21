@@ -113,6 +113,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   web: 'web.md',
   workflowEngine: 'workflow.md',
   workspaceRegistry: 'workspace.md',
+  widgets: 'widgets.md',
 }
 
 /**
@@ -192,6 +193,7 @@ export const EVENT_SCOPE_PAGE: Record<string, string> = {
   'tools': 'tools.md',
   'webserver': 'web-server.md',
   'workflow': 'workflow.md',
+  'widgets': 'widgets.md',
 }
 
 /**
@@ -513,6 +515,11 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   DomainFacility: 'storage.md',
   Workspace: 'workspace.md',
   WorkspaceId: 'workspace.md',
+  WidgetDocument: 'widgets.md',
+  WidgetFetchResult: 'widgets.md',
+  WidgetId: 'widgets.md',
+  WidgetManifest: 'widgets.md',
+  WidgetView: 'widgets.md',
   WebBootGraph: 'client-modules.md',
   SessionTelemetryRecord: 'session-telemetry.md',
   WorkflowRunInfo: 'workflow.md',
