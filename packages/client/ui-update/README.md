@@ -16,8 +16,11 @@ Renders an update hint in the bottom-right of the settings panel when the packag
 
 ## Model Experience
 
-- No tokens, KV cache, or provider requests. One unauthenticated GitHub API call per settings-panel open (rate limit 60/h is far above use).
-- Fetch failure is silent: the indicator renders nothing rather than an error.
+None, as the browser-side release indicator never reaches a model request.
+
+#### KV Cache effect
+
+None; this package neither assembles nor sends a provider request.
 
 ## Known Limitations and Deferred Work
 

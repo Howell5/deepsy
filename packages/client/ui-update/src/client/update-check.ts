@@ -39,7 +39,11 @@ export const UNKNOWN_VERSION = '0.0.0'
 export const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/Howell5/deepsy/releases?per_page=1'
 
-/** Strip a leading `v` from a release tag and validate the semver shape. */
+/**
+ * Strip a leading `v` from a release tag and validate the semver syntax.
+ * @param tag - GitHub release tag.
+ * @returns The normalized version, or `null` when the tag is invalid.
+ */
 export function parseReleaseTag(tag: string): string | null {
   const match = /^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/.exec(tag.trim())
   return match?.[1] ?? null
