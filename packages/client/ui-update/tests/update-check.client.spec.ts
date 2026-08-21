@@ -3,7 +3,7 @@ import {
   parseReleaseTag, resolveUpdateInfo, UNKNOWN_VERSION, type DeedooRelease,
 } from '../src/client/update-check.ts'
 
-function release(tagName: string, url = 'https://github.com/Howell5/deedoo/releases/tag/1'): DeedooRelease {
+function release(tagName: string, url = 'https://github.com/Howell5/deepsy/releases/tag/1'): DeedooRelease {
   return { tagName, htmlUrl: url }
 }
 

@@ -37,7 +37,7 @@ export const UNKNOWN_VERSION = '0.0.0'
 
 /** Default endpoint: newest release on the Deedoo repository. */
 export const GITHUB_RELEASES_URL =
-  'https://api.github.com/repos/Howell5/deedoo/releases?per_page=1'
+  'https://api.github.com/repos/Howell5/deepsy/releases?per_page=1'
 
 /** Strip a leading `v` from a release tag and validate the semver shape. */
 export function parseReleaseTag(tag: string): string | null {
