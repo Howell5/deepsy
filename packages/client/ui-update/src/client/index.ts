@@ -14,10 +14,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 import { UpdateStatus } from './UpdateStatus.tsx'
 
-export { fetchDeedooReleases, parseReleaseTag, resolveUpdateInfo } from './update-check.ts'
-export type { DeedooRelease, UpdateInfo } from './update-check.ts'
-export type { UpdateStatusProps } from './UpdateStatus.tsx'
-
 /** Required service: the slot registry. */
 export const inject = ['slots']
 

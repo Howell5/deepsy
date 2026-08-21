@@ -3,7 +3,7 @@ import { buildReleaseManifest } from './write-latest-json.ts'
 
 describe('buildReleaseManifest', () => {
   it('includes version and release url', () => {
-    const manifest = buildReleaseManifest('0.1.0-rc.6', 'https://github.com/Howell5/deedoo/releases/tag/v0.1.0-rc.6')
+    const manifest = buildReleaseManifest('0.1.0-rc.6', 'https://github.com/Howell5/deepsy/releases/tag/v0.1.0-rc.6')
     expect(manifest.version).toBe('0.1.0-rc.6')
     expect(manifest.url).toContain('releases/tag/v0.1.0-rc.6')
   })

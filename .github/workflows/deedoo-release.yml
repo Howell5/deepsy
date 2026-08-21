@@ -3,7 +3,7 @@
 # Watches the upstream npm `latest` dist-tag of @deepseek-ai/dsh (upstream
 # publishes no GitHub Releases or git tags; npm is the authoritative stream).
 # When that tag is strictly newer than the version packaged in this workspace,
-# bumps the workspace versions, builds the unsigned desktop shell, and
+# bumps the dsh release family, builds the unsigned desktop shell, and
 # publishes a GitHub Release with the macOS artifacts and the latest.json
 # manifest. macOS-first; Windows NSIS and Linux AppImage packaging is follow-up
 # work. The workflow never triggers on push, so routine commits cannot cause a
@@ -85,18 +85,13 @@ jobs:
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run == true
         run: 'echo "dry-run: upstream ${{ steps.decision.outputs.target }} is newer than ${{ steps.decision.outputs.current }}; no build."'
 
-      - name: Bump workspace versions to target
+      - name: Bump dsh release family to target
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
         run: |
           TARGET="${{ steps.decision.outputs.target }}"
-          node -e "
-            const fs = require('node:fs')
-            for (const file of ['package.json', 'apps/desktop/package.json']) {
-              const p = JSON.parse(fs.readFileSync(file, 'utf8'))
-              p.version = process.argv[1]
-              fs.writeFileSync(file, JSON.stringify(p, null, 2) + '\n')
-            }
-          " "$TARGET"
+          git config user.name 'deedoo-release[bot]'
+          git config user.email 'deedoo-release[bot]@users.noreply.github.com'
+          pnpm run release:dsh "$TARGET"
 
       - name: Build desktop artifacts
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
@@ -106,15 +101,9 @@ jobs:
           pnpm run build:desktop
           pnpm --filter @deepseek-ai/dsh-desktop run package
 
-      - name: Commit version bump
+      - name: Push version bump
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
-        run: |
-          TARGET="${{ steps.decision.outputs.target }}"
-          git config user.name 'deedoo-release[bot]'
-          git config user.email 'deedoo-release[bot]@users.noreply.github.com'
-          git add package.json pnpm-lock.yaml apps/desktop/package.json
-          git commit -m "chore(desktop): bump version to $TARGET from upstream detection"
-          git push origin HEAD
+        run: git push origin HEAD
 
       - name: Create GitHub Release
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true

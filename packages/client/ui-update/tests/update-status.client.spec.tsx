@@ -6,7 +6,7 @@ import type { DeedooRelease } from '../src/client/update-check.ts'
 
 const release: DeedooRelease = {
   tagName: 'v0.1.0-rc.6',
-  htmlUrl: 'https://github.com/Howell5/deedoo/releases/tag/v0.1.0-rc.6',
+  htmlUrl: 'https://github.com/Howell5/deepsy/releases/tag/v0.1.0-rc.6',
 }
 
 describe('UpdateStatus', () => {
