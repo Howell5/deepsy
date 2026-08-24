@@ -44,8 +44,8 @@ describe('Widgets workspace canvas', () => {
       active="widgets"
       api={api as never}
       layout={{} as never}
-      useSessions={(() => { throw new Error('not used') }) as never}
-      useWorkspaces={(() => { throw new Error('not used') }) as never}
+      useSessions={() => { throw new Error('not used') }}
+      useWorkspaces={() => { throw new Error('not used') }}
       subscribeChanges={() => () => {}}
       editWidget={async () => {}}
       t={(key: string) => key}
