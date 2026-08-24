@@ -41,6 +41,10 @@ function scriptedApi(overrides: {
       read: r => err(r),
       install: r => err(r),
       remove: r => err(r),
+      stateRead: r => ok(r, { state: {} }),
+      stateWrite: r => ok(r, { saved: true as const }),
+      layoutRead: r => ok(r, { layout: [] }),
+      layoutWrite: r => ok(r, { saved: true as const }),
       fetch: r => err(r),
       ...overrides.widgets,
     },
@@ -161,14 +165,14 @@ describe('unary round trip', () => {
   it('creates a Widget through the typed carrier', async () => {
     const widget = {
       manifest: {
-        schemaVersion: 1 as const,
+        schemaVersion: 2 as const,
         id: 'widget-new',
         name: 'New Widget',
         version: '0.1.0',
         runtime: 'static' as const,
         entry: 'dist/index.html',
-        aspectRatios: ['1:1' as const],
-        defaultAspectRatio: '1:1' as const,
+        sizes: ['small' as const],
+        defaultSize: 'small' as const,
         permissions: { network: [] },
         refresh: { mode: 'manual' as const, minimumIntervalSeconds: 30 },
       },
@@ -177,6 +181,24 @@ describe('unary round trip', () => {
     }
     const response = await client(scriptedApi({ widgets: { create: r => ok(r, { widget }) } })).widgets.create({})
     expect(response.result).toEqual({ ok: true, value: { widget } })
+  })
+
+  it('round-trips Widget state and logical layout through their wire schemas', async () => {
+    const state = { days: { '2026-08-24': { pickedUp: true } } }
+    const layout = [{ id: 'calculator', size: 'medium' as const, column: 2, row: 1 }]
+    const api = scriptedApi({
+      widgets: {
+        stateRead: r => ok(r, { state }),
+        layoutRead: r => ok(r, { layout }),
+      },
+    })
+
+    await expect(client(api).widgets.stateRead({ id: 'calculator' })).resolves.toMatchObject({
+      result: { ok: true, value: { state } },
+    })
+    await expect(client(api).widgets.layoutRead({})).resolves.toMatchObject({
+      result: { ok: true, value: { layout } },
+    })
   })
 
   it('carries payload out and value back through the full wire form', async () => {

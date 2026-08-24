@@ -2876,6 +2876,43 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         }
       },
 
+      async stateRead(request) {
+        try {
+          return ok(request, { state: await ctx.widgets.readState(brandWidgetId(request.payload.id)) })
+        } catch (error) {
+          return err(request, widgetRpcError(error))
+        }
+      },
+
+      async stateWrite(request) {
+        try {
+          await ctx.widgets.writeState(brandWidgetId(request.payload.id), request.payload.state)
+          return ok(request, { saved: true as const })
+        } catch (error) {
+          return err(request, widgetRpcError(error))
+        }
+      },
+
+      async layoutRead(request) {
+        try {
+          return ok(request, { layout: await ctx.widgets.readLayout() })
+        } catch (error) {
+          return err(request, widgetRpcError(error))
+        }
+      },
+
+      async layoutWrite(request) {
+        try {
+          await ctx.widgets.writeLayout(request.payload.layout.map(item => ({
+            ...item,
+            id: brandWidgetId(item.id),
+          })))
+          return ok(request, { saved: true as const })
+        } catch (error) {
+          return err(request, widgetRpcError(error))
+        }
+      },
+
       async fetch(request, signal) {
         try {
           return ok(request, await ctx.widgets.fetch(

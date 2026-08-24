@@ -14,33 +14,37 @@ DeepSeek Harness 需要一个持久位置来安装和再次打开本地微型应
 
 桌面组合包含一个位于 Workspace 浏览器下方、Settings 上方的一级 **Widgets** 应用。选择它会保留当前 Session，并用 Widget 网格替换中间的 Conversation 视图。启动或打开 Session 时会重新选择 Conversation。
 
-第一版接收一个包含严格 `widget.json` manifest（元数据清单）和单个自包含静态 HTML 入口的本地目录。manifest 声明一种或多种固定的 `1:1`、`16:9` 或 `9:16` 画布以及默认画布。本地提供方校验这些文件，并通过暂存重命名将其复制到 `$DSH_HOME/widgets/projects/<id>`。它也可以创建一个具有唯一标识的正方形起始项目，其中包含 manifest、入口和项目本地 `AGENTS.md` 创作规则。Workspace 指令加载器会把这些规则提供给创建或修改 Widget 的每次模型请求。规则要求 Agent 推导使用情境、形成内部设计判断、实现一套符合领域的视觉系统，并自行复查数据状态、无障碍和反模板标准，无需让用户配置风格。提供方绝不调用 `npm install`、包脚本、任意构建命令，也不会为每个 Widget 启动 localhost 服务器。工作台把每张卡片选中的声明画布比例持久化到浏览器存储。
+第二版接收一个包含严格 `widget.json` manifest（元数据清单）和单个自包含静态 HTML 入口的本地目录。manifest 声明一种或多种语义尺寸 `small`、`medium` 或 `large` 以及默认尺寸；它们分别占用 `1×1`、`2×1` 和 `2×2` 个逻辑单元格。本地提供方校验这些文件，并通过暂存重命名将其复制到 `$DSH_HOME/widgets/projects/<id>`。它也可以创建一个具有唯一标识的起始项目，其中包含 manifest、入口和项目本地 `AGENTS.md` 创作规则。Workspace 指令加载器会把这些规则提供给创建或修改 Widget 的每次模型请求。规则要求 Agent 推导使用情境、形成内部设计判断、实现一套符合领域的视觉系统、自行复查数据状态、无障碍和反模板标准，并使用宿主状态桥接保存持久交互数据，无需让用户配置风格。提供方绝不调用 `npm install`、包脚本、任意构建命令，也不会为每个 Widget 启动 localhost 服务器。
 
-两个内置项目覆盖两条运行路径。Quick Calculator 没有权限，在正方形画布内运行。Gold / USD 适配 `16:9` 画布，通过宿主桥接从 `xaus.com` 请求公开日线历史数据，并绘制最近 90 个观测值；卡片会标明数据仅供参考。
+两个内置项目覆盖两条运行路径。Quick Calculator 没有权限，支持全部三种尺寸。Gold / USD 支持 `medium` 和 `large`，通过宿主桥接从 `xaus.com` 请求公开日线历史数据，并绘制最近 90 个观测值；卡片会标明数据仅供参考。
+
+Widgets 应用把完整中间区域作为逻辑画布。用户进入明确的编辑模式，拖动整张卡片并把它放到吸附网格单元；方向键提供同一移动操作。被占用的目标会解析到下一个空闲单元。宿主把明确的 `{ id, size, column, row }` 位置存入仅所有者可读写的文件。较窄窗口可以临时约束并重排保存的位置以供显示，但仅调整窗口大小绝不会覆盖桌面布局。
 
 **新建 Widget**会创建受管理的起始项目，立即把其目录作为普通 Workspace 接入，在 Conversation 中打开空白会话，并在右侧详情栏选择实时预览。每张已有卡片的**和它聊聊**操作会执行相同交接。精确受管理路径匹配会同时在空白 Hero 和活跃会话页头加入同一个预览开关。浏览器存储按 Workspace 记录预览是否打开：两种交接都会启用该偏好，从普通 Workspace 或 Session 导航进入时会恢复偏好，而任一预览关闭控件都会停用偏好。这些操作本身绝不发送提示词。本地提供方监听受管理根目录，在写入稳定后发送 `widgets/changed(id)`；Remote 投影转发该失效通知，让该 Widget 的每个可见 frame 重新读取经过校验的入口，并让每个已接入 Workspace 使用当前 manifest 名称作为显示标题。
 
 ## 运行时和网络策略
 
-卡片通过 `iframe sandbox="allow-scripts"` 按照选中的 manifest 比例渲染宿主校验后的 HTML。父页面注入固定画布规则，在不缩放内容的前提下禁止滚动。布局观察器向父页面报告内容固有溢出；父页面会用布局无效错误替换发生溢出的文档，生成页面必须适配它声明的每一种比例。父页面还会注入内容安全策略，拒绝直接连接、导航权限、Node 集成和文件系统访问。嵌入脚本通过 `postMessage` 调用 `window.dshWidget.fetch(url)`；父页面只接受来自该卡片 frame 的请求，再把请求转发到带类型的宿主 RPC 域。
+卡片通过 `iframe sandbox="allow-scripts"` 按照选中的语义尺寸渲染宿主校验后的 HTML。父页面注入固定画布规则，在不缩放内容的前提下禁止滚动。布局观察器向父页面报告内容固有溢出；父页面会用布局无效错误替换发生溢出的文档，生成页面必须适配它声明的每一种尺寸。父页面还会注入内容安全策略，拒绝直接连接、导航权限、Node 集成和文件系统访问。嵌入脚本通过 `postMessage` 调用 `window.dshWidget.fetch(url)`、`state.get()` 和 `state.set(nextState)`；父页面只接受来自该卡片 frame 的请求，自行提供调用方 Widget id，再把请求转发到带类型的宿主 RPC 域。
 
 本地提供方只允许向 manifest 精确主机名发起无凭证 HTTPS GET 请求。它检查每次重定向和解析地址，拒绝私有目标及非默认端口，把请求限制为 15 秒和三次重定向，并把每个响应限制为 512 KiB。frame 只收到响应状态、内容类型和文本，绝不会收到宿主凭证。
+
+每个已安装 Widget 在 `$DSH_HOME/widgets/projects/.state/<id>.json` 下拥有一份受限 JSON 对象；逻辑画布位于 `.layout.json`。这些文件位于每个 Agent 可编辑项目之外，被项目监听器忽略，仅所有者可读写，并采用原子替换。状态文档最多包含 256 个键且不超过 64 KiB，布局最多包含 256 个位置且不超过 128 KiB。移除非内置 Widget 时会移除其状态。状态 API 有意不提供任意路径、文件系统、数据库或跨 Widget 访问。
 
 ## 包归属
 
 | 包 | 职责 |
 |---|---|
-| `packages/widget/widgets` | Service Definition、严格 manifest 解析器、品牌化 id、操作和稳定错误 |
-| `packages/widget/widgets-local` | 受管理项目存储、内置示例、路径校验、文件变更通知和外部请求策略 |
-| `packages/host/apiproxy` | 带类型的 Widget RPC 方法和载体 schema |
-| `packages/client/ui-widgets` | 侧边栏入口、工作台网格、Agent 编辑交接、实时预览、隔离 frame 和 frame 到宿主的桥接 |
+| `packages/widget/widgets` | Service Definition、严格 manifest／状态／布局解析器、品牌化 id、操作和稳定错误 |
+| `packages/widget/widgets-local` | 受管理项目与宿主拥有的数据存储、内置示例、路径校验、文件变更通知和外部请求策略 |
+| `packages/host/apiproxy` | 带类型的 Widget 生命周期、状态、布局和 fetch RPC 方法及载体 schema |
+| `packages/client/ui-widgets` | 侧边栏入口、吸附画布、Agent 编辑交接、实时预览、隔离 frame 和 frame 到宿主的桥接 |
 | `packages/client/ui-layout`、`packages/client/ui-sidebar` 和 `packages/client/ui-conversation` | 通用根应用／详情应用选择，以及会话页头和空白 Hero 工具 slot |
 
 Service Definition 不包含 UI 或传输假设。UI 只通过宿主方法读取项目，绝不直接访问本地目录。
 
 ## 验证
 
-提供方测试覆盖起始项目创建、示例写入、静态项目导入、重复拒绝、未声明网络访问拒绝、监听器失效通知和监听器释放。客户端测试覆盖 Agent 编辑所需的 Workspace 复用、接入、manifest 名称同步和预览偏好持久化。构建后的 Web 路径会创建起始项目，进入其空白会话并打开预览，再为已有 Widget 覆盖相同交接和预览恢复。API 载体测试通过真实 fetch handler 验证 Widget 请求与响应序列化。客户端和宿主聚合 TypeScript 程序包含所有新包，发行版 Web／桌面组合会同时挂载提供方和 UI。
+提供方测试覆盖起始项目创建、示例写入、静态项目导入、重复拒绝、项目文件之外的状态与布局持久化、未声明网络访问拒绝、监听器失效通知和监听器释放。客户端测试覆盖逻辑位置、碰撞规避、语义尺寸调整、键盘移动持久化，以及 Agent 编辑所需的 Workspace 复用、接入、manifest 名称同步和预览偏好持久化。构建后的 Web 路径会创建起始项目，进入其空白会话并打开预览，再为已有 Widget 覆盖相同交接和预览恢复。API 载体测试通过真实 fetch handler 验证 Widget 请求与响应序列化。客户端和宿主聚合 TypeScript 程序包含所有包，发行版 Web／桌面组合会同时挂载提供方和 UI。
 
 ## 考虑过的替代方案
 
@@ -54,8 +58,12 @@ Service Definition 不包含 UI 或传输假设。UI 只通过宿主方法读取
 
 **只在 Widgets 卡片交接时提供预览。** 否决，因为预览属于受管理项目，而非某一条导航路径；从普通 Workspace 浏览器返回时必须保留一个明确的打开入口。
 
+**使用 iframe `localStorage` 保存 Widget 数据并用浏览器存储保存布局。** 否决，因为沙箱 frame 使用不透明来源，状态会依赖某个浏览器配置文件和渲染上下文，Agent 编辑或 frame 重建也可能让数据脱离已安装 Widget 身份。
+
+**增加数据库或向生成代码暴露项目文件。** 否决，因为受限 JSON 替换已经提供所需持久性。数据库会增加 schema 和生命周期负担，而文件系统访问会把生成代码的权限扩大到状态持久化之外。
+
 ## 后果
 
 桌面端无需系统 Node.js 或项目专属服务器即可运行实用的本地 Widget，联网 Widget 也只有一个可审计的宿主中介点。同一组应用 slot 可以承载后续一级桌面界面，而不必把它们做成 Session 视图。
 
-第一版有意只复制 manifest 和一个自包含 HTML 入口。其创作流程复用普通 Workspace、Session、输入框和详情栏，不新增独立编辑器。预览偏好是浏览器本地 UI 状态，不属于 Session 日志或 Widget 数据。它没有资源目录、凭证桥接、Widget 持久化存储、间隔调度器、权限审批 UI、更新、卡片重排、停用状态或独立聚焦视图。这些扩展会扩大持久状态或运行时权限，因此需要独立决策。
+提供方有意只复制 manifest 和一个自包含 HTML 入口。其创作流程复用普通 Workspace、Session、输入框和详情栏，不新增独立编辑器。预览打开偏好仍是浏览器本地展示状态，而 Widget 数据和画布位置是宿主拥有的文件，不属于 Session 日志数据。平台没有资源目录、凭证桥接、间隔调度器、权限审批 UI、更新、多实例身份、停用状态或独立聚焦视图。这些扩展会扩大持久状态或运行时权限，因此需要独立决策。

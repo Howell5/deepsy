@@ -80,6 +80,10 @@ export interface RpcMethodMap {
   'widget.read': WidgetsApi['read']
   'widget.install': WidgetsApi['install']
   'widget.remove': WidgetsApi['remove']
+  'widget.state.read': WidgetsApi['stateRead']
+  'widget.state.write': WidgetsApi['stateWrite']
+  'widget.layout.read': WidgetsApi['layoutRead']
+  'widget.layout.write': WidgetsApi['layoutWrite']
   'widget.fetch': WidgetsApi['fetch']
 }
 

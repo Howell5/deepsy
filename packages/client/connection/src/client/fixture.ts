@@ -34,7 +34,7 @@ import { deriveEventMessage, foldSurface } from '@deepseek-ai/dsh-session/surfac
 import type {
   ApiProxy, ClientRequest, ClientResponse, HistoryEntry, HostFrame, MuxFrame, RpcReceipt,
   ModelProviderGroup, ModelSelection, RpcRequest, RpcResponse, RpcResult, ServerRequest, ServerResponse, SessionSummary,
-  ToolCallView, ToolEventView, ToolResultView, WidgetView, WorkspaceId, WorkspaceView,
+  ToolCallView, ToolEventView, ToolResultView, WidgetLayoutItem, WidgetState, WidgetView, WorkspaceId, WorkspaceView,
 } from './api.ts'
 import type { RequestPayload, ResponseValue, RpcMethodMap } from '@deepseek-ai/dsh-host-apiproxy/api'
 import { AbstractApiClient, RpcId, SESSION_SEARCH_RESULT_LIMIT } from './api.ts'
@@ -2265,14 +2265,14 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
 
   const fixtureWidget: WidgetView = {
     manifest: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'calculator',
       name: 'Calculator',
       version: '1.0.0',
       runtime: 'static',
       entry: 'dist/index.html',
-      aspectRatios: ['1:1'],
-      defaultAspectRatio: '1:1',
+      sizes: ['small', 'medium', 'large'],
+      defaultSize: 'small',
       permissions: { network: [] },
       refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
     },
@@ -2280,6 +2280,8 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
     builtIn: true,
   }
   const fixtureWidgets = [fixtureWidget]
+  const fixtureWidgetState = new Map<string, WidgetState>()
+  let fixtureWidgetLayout: WidgetLayoutItem[] = []
   let nextWidget = 1
 
   const api: ApiProxy = {
@@ -2289,14 +2291,14 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
         const id = `widget-${nextWidget++}`
         const widget: WidgetView = {
           manifest: {
-            schemaVersion: 1,
+            schemaVersion: 2,
             id,
             name: 'New Widget',
             version: '0.1.0',
             runtime: 'static',
             entry: 'dist/index.html',
-            aspectRatios: ['1:1'],
-            defaultAspectRatio: '1:1',
+            sizes: ['small', 'medium', 'large'],
+            defaultSize: 'small',
             permissions: { network: [] },
             refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
           },
@@ -2329,6 +2331,16 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
         message: `fixture has no Widget '${request.payload.id}'`,
         details: { reason: 'not-found' },
       }),
+      stateRead: request => ok(request, { state: fixtureWidgetState.get(request.payload.id) ?? {} }),
+      stateWrite: (request) => {
+        fixtureWidgetState.set(request.payload.id, request.payload.state)
+        return ok(request, { saved: true as const })
+      },
+      layoutRead: request => ok(request, { layout: fixtureWidgetLayout }),
+      layoutWrite: (request) => {
+        fixtureWidgetLayout = request.payload.layout
+        return ok(request, { saved: true as const })
+      },
       fetch: request => err(request, {
         code: 'widget-error',
         message: `fixture blocks Widget network request '${request.payload.url}'`,
@@ -3272,6 +3284,10 @@ export class FixtureApiClient extends AbstractApiClient {
       case 'widget.read': return this.api.widgets.read(request)
       case 'widget.install': return this.api.widgets.install(request)
       case 'widget.remove': return this.api.widgets.remove(request)
+      case 'widget.state.read': return this.api.widgets.stateRead(request)
+      case 'widget.state.write': return this.api.widgets.stateWrite(request)
+      case 'widget.layout.read': return this.api.widgets.layoutRead(request)
+      case 'widget.layout.write': return this.api.widgets.layoutWrite(request)
       case 'widget.fetch': return this.api.widgets.fetch(request, signal)
       case 'workspace.list': return this.api.workspace.list(request)
       case 'workspace.create': return this.api.workspace.create(request)

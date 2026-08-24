@@ -5,16 +5,24 @@ import type { RequestPayload, ResponseValue } from './rpc-map.ts'
 import type { Wire } from './rpc.schema.ts'
 
 const widgetIdSchema = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/)
+const widgetSizeSchema = z.enum(['small', 'medium', 'large'])
+const widgetStateSchema = z.record(z.string().min(1).max(128), z.json())
+const widgetLayoutSchema = z.array(z.object({
+  id: widgetIdSchema,
+  size: widgetSizeSchema,
+  column: z.number().int().min(0).max(255),
+  row: z.number().int().min(0).max(65_535),
+})).max(256)
 
 const widgetManifestSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   id: widgetIdSchema,
   name: z.string(),
   version: z.string(),
   runtime: z.literal('static'),
   entry: z.string(),
-  aspectRatios: z.array(z.enum(['1:1', '16:9', '9:16'])),
-  defaultAspectRatio: z.enum(['1:1', '16:9', '9:16']),
+  sizes: z.array(widgetSizeSchema),
+  defaultSize: widgetSizeSchema,
   permissions: z.object({ network: z.array(z.string()) }),
   refresh: z.object({
     mode: z.enum(['manual', 'on-open', 'visible-interval']),
@@ -69,6 +77,41 @@ export const widgetRemoveRequestSchema = z.object({
 export const widgetRemoveValueSchema = z.object({
   removed: z.literal(true),
 }) satisfies z.ZodType<Wire<ResponseValue<'widget.remove'>>>
+
+/** Wire request schema for `widget.state.read`. */
+export const widgetStateReadRequestSchema = z.object({
+  id: widgetIdSchema,
+}) satisfies z.ZodType<Wire<RequestPayload<'widget.state.read'>>>
+/** Wire response value schema for `widget.state.read`. */
+export const widgetStateReadValueSchema = z.object({
+  state: widgetStateSchema,
+}) satisfies z.ZodType<Wire<ResponseValue<'widget.state.read'>>>
+
+/** Wire request schema for `widget.state.write`. */
+export const widgetStateWriteRequestSchema = z.object({
+  id: widgetIdSchema,
+  state: widgetStateSchema,
+}) satisfies z.ZodType<Wire<RequestPayload<'widget.state.write'>>>
+/** Wire response value schema for `widget.state.write`. */
+export const widgetStateWriteValueSchema = z.object({
+  saved: z.literal(true),
+}) satisfies z.ZodType<Wire<ResponseValue<'widget.state.write'>>>
+
+/** Wire request schema for `widget.layout.read`. */
+export const widgetLayoutReadRequestSchema = z.object({}) satisfies z.ZodType<Wire<RequestPayload<'widget.layout.read'>>>
+/** Wire response value schema for `widget.layout.read`. */
+export const widgetLayoutReadValueSchema = z.object({
+  layout: widgetLayoutSchema,
+}) satisfies z.ZodType<Wire<ResponseValue<'widget.layout.read'>>>
+
+/** Wire request schema for `widget.layout.write`. */
+export const widgetLayoutWriteRequestSchema = z.object({
+  layout: widgetLayoutSchema,
+}) satisfies z.ZodType<Wire<RequestPayload<'widget.layout.write'>>>
+/** Wire response value schema for `widget.layout.write`. */
+export const widgetLayoutWriteValueSchema = z.object({
+  saved: z.literal(true),
+}) satisfies z.ZodType<Wire<ResponseValue<'widget.layout.write'>>>
 
 /** Wire request schema for `widget.fetch`. */
 export const widgetFetchRequestSchema = z.object({

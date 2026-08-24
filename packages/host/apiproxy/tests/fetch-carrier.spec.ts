@@ -32,6 +32,18 @@ function fakeApi(overrides: Partial<{ muxFrames: MuxFrame[]; hostFrames: HostFra
       async remove(request) {
         return { rpcId: request.rpcId, result: { ok: false, error: { code: 'widget-error', message: 'missing', details: { reason: 'not-found' } } } }
       },
+      async stateRead(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: { state: {} } } }
+      },
+      async stateWrite(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: { saved: true as const } } }
+      },
+      async layoutRead(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: { layout: [] } } }
+      },
+      async layoutWrite(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: { saved: true as const } } }
+      },
       async fetch(request) {
         return { rpcId: request.rpcId, result: { ok: false, error: { code: 'widget-error', message: 'blocked', details: { reason: 'unavailable' } } } }
       },

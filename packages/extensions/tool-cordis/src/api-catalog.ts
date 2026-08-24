@@ -2334,6 +2334,28 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [{ name: 'id', description: 'installed Widget identifier.' }],
       },
       {
+        signature: 'abstract readState(id: WidgetId): Promise<WidgetState>',
+        description: 'Read one Widget\'s Host-owned state document.',
+        parameters: [{ name: 'id', description: 'installed Widget identifier.' }],
+        returns: 'persisted JSON state, or an empty object before the first write.',
+      },
+      {
+        signature: 'abstract writeState(id: WidgetId, state: WidgetState): Promise<void>',
+        description: 'Replace one Widget\'s Host-owned state document.',
+        parameters: [{ name: 'id', description: 'installed Widget identifier.' }, { name: 'state', description: 'complete next JSON state.' }],
+      },
+      {
+        signature: 'abstract readLayout(): Promise<WidgetLayoutItem[]>',
+        description: 'Read the desktop canvas\'s logical Widget placements.',
+        parameters: [],
+        returns: 'persisted placements, or an empty layout before the first write.',
+      },
+      {
+        signature: 'abstract writeLayout(layout: WidgetLayoutItem[]): Promise<void>',
+        description: 'Replace the desktop canvas\'s logical Widget placements.',
+        parameters: [{ name: 'layout', description: 'complete next placement list.' }],
+      },
+      {
         signature: 'abstract fetch(id: WidgetId, url: string, signal: AbortSignal): Promise<WidgetFetchResult>',
         description: 'Perform one permission-checked external GET for a Widget.',
         parameters: [{ name: 'id', description: 'calling Widget identifier.' }, { name: 'url', description: 'absolute HTTPS URL.' }, { name: 'signal', description: 'caller lifetime.' }],

@@ -55,7 +55,7 @@ export function WidgetDetails({
     <WidgetFrame
       api={api}
       widget={widget}
-      aspectRatio={widget.manifest.defaultAspectRatio}
+      size={widget.manifest.defaultSize}
       subscribeChanges={subscribeChanges}
       t={t}
       variant="details"

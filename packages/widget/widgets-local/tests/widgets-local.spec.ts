@@ -57,8 +57,8 @@ describe('LocalWidgets', () => {
     try {
       const widgets = await ctx.widgets.list()
       expect(widgets.map(widget => widget.manifest.id)).toEqual(['gold-price', 'calculator'])
-      expect(widgets.find(widget => widget.manifest.id === 'calculator')?.manifest.aspectRatios).toEqual(['1:1'])
-      expect(widgets.find(widget => widget.manifest.id === 'gold-price')?.manifest.aspectRatios).toEqual(['16:9'])
+      expect(widgets.find(widget => widget.manifest.id === 'calculator')?.manifest.sizes).toEqual(['small', 'medium', 'large'])
+      expect(widgets.find(widget => widget.manifest.id === 'gold-price')?.manifest.sizes).toEqual(['medium', 'large'])
       expect(widgets.find(widget => widget.manifest.id === 'calculator')?.manifest.permissions.network).toEqual([])
       expect(widgets.find(widget => widget.manifest.id === 'gold-price')?.manifest.permissions.network).toEqual(['xaus.com'])
       const calculator = await ctx.widgets.read(WidgetId('calculator'))
@@ -77,7 +77,7 @@ describe('LocalWidgets', () => {
       expect(first).toMatchObject({
         manifest: {
           name: 'New Widget',
-          aspectRatios: ['1:1'],
+          sizes: ['small', 'medium', 'large'],
           permissions: { network: [] },
         },
         builtIn: false,
@@ -86,6 +86,8 @@ describe('LocalWidgets', () => {
       expect((await ctx.widgets.read(first.manifest.id)).html).toContain('Tell Agent what this should become.')
       const instructions = await readFile(join(first.sourcePath, 'AGENTS.md'), 'utf8')
       expect(instructions).toContain('window.dshWidget.fetch(url)')
+      expect(instructions).toContain('window.dshWidget.state.get()')
+      expect(instructions).toContain('use date keys for state that resets by day')
       expect(instructions).toContain('Apply this workflow to every creation and redesign, including incremental changes.')
       expect(instructions).toContain('Form one private design read before editing')
       expect(instructions).toContain('purpose-built desktop object')
@@ -101,14 +103,14 @@ describe('LocalWidgets', () => {
     const source = join(root, '..', 'source')
     await mkdir(join(source, 'dist'), { recursive: true })
     await writeFile(join(source, 'widget.json'), JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: 'hello',
       name: 'Hello',
       version: '1',
       runtime: 'static',
       entry: 'dist/index.html',
-      aspectRatios: ['1:1'],
-      defaultAspectRatio: '1:1',
+      sizes: ['small'],
+      defaultSize: 'small',
       permissions: { network: [] },
       refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
     }))
@@ -121,6 +123,28 @@ describe('LocalWidgets', () => {
       await expect(ctx.widgets.install(source)).rejects.toMatchObject({
         code: 'already-installed',
       })
+    } finally {
+      await fiber.dispose()
+    }
+  })
+
+  it('persists bounded Widget state and canvas layout outside project files', async () => {
+    const { ctx, fiber, root } = await harness()
+    try {
+      await ctx.widgets.writeState(WidgetId('calculator'), {
+        days: { '2026-08-24': { pickedUp: true } },
+      })
+      await ctx.widgets.writeLayout([{
+        id: WidgetId('calculator'), size: 'medium', column: 3, row: 2,
+      }])
+
+      await expect(ctx.widgets.readState(WidgetId('calculator'))).resolves.toEqual({
+        days: { '2026-08-24': { pickedUp: true } },
+      })
+      await expect(ctx.widgets.readLayout()).resolves.toEqual([{
+        id: 'calculator', size: 'medium', column: 3, row: 2,
+      }])
+      await expect(readFile(join(root, 'calculator', 'widget.json'), 'utf8')).resolves.not.toContain('pickedUp')
     } finally {
       await fiber.dispose()
     }

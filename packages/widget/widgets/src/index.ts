@@ -22,22 +22,36 @@ export function WidgetId(value: string): WidgetId {
   return value as WidgetId
 }
 
-/** Fixed canvas proportions supported by the first Widgets workspace. */
-export type WidgetAspectRatio = '1:1' | '16:9' | '9:16'
+/** Semantic Widget sizes supported by the desktop workspace. */
+export type WidgetSize = 'small' | 'medium' | 'large'
+
+/** JSON object persisted for one Widget outside its editable project. */
+export type WidgetState = { [key: string]: WidgetStateValue }
+
+/** Lossless JSON value accepted by Widget state storage. */
+export type WidgetStateValue = null | boolean | number | string | WidgetStateValue[] | WidgetState
+
+/** One Widget's logical position on the desktop canvas. */
+export interface WidgetLayoutItem {
+  id: WidgetId
+  size: WidgetSize
+  column: number
+  row: number
+}
 
 /** Refresh behavior available to static Widgets. */
 export type WidgetRefreshMode = 'manual' | 'on-open' | 'visible-interval'
 
-/** Version 1 static Widget manifest. */
+/** Version 2 static Widget manifest. */
 export interface WidgetManifest {
-  schemaVersion: 1
+  schemaVersion: 2
   id: WidgetId
   name: string
   version: string
   runtime: 'static'
   entry: string
-  aspectRatios: WidgetAspectRatio[]
-  defaultAspectRatio: WidgetAspectRatio
+  sizes: WidgetSize[]
+  defaultSize: WidgetSize
   permissions: {
     network: string[]
   }
@@ -48,6 +62,7 @@ export interface WidgetManifest {
 }
 
 const widgetIdSchema = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/)
+const widgetSizeSchema = z.enum(['small', 'medium', 'large'])
 const hostnameSchema = z.string().min(1).max(253).refine((value) => {
   try {
     const url = new URL(`https://${value}`)
@@ -57,16 +72,16 @@ const hostnameSchema = z.string().min(1).max(253).refine((value) => {
   }
 }, 'network permissions must be exact hostnames')
 
-/** Strict parser for the version 1 manifest boundary. */
+/** Strict parser for the version 2 manifest boundary. */
 export const widgetManifestSchema = z.strictObject({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   id: widgetIdSchema.transform(WidgetId),
   name: z.string().trim().min(1).max(80),
   version: z.string().trim().min(1).max(40),
   runtime: z.literal('static'),
   entry: z.string().min(1).max(240),
-  aspectRatios: z.array(z.enum(['1:1', '16:9', '9:16'])).min(1),
-  defaultAspectRatio: z.enum(['1:1', '16:9', '9:16']),
+  sizes: z.array(widgetSizeSchema).min(1),
+  defaultSize: widgetSizeSchema,
   permissions: z.strictObject({
     network: z.array(hostnameSchema).max(16),
   }),
@@ -75,22 +90,66 @@ export const widgetManifestSchema = z.strictObject({
     minimumIntervalSeconds: z.number().int().min(30).max(86_400),
   }),
 }).superRefine((manifest, issue) => {
-  if (!manifest.aspectRatios.includes(manifest.defaultAspectRatio)) {
+  if (!manifest.sizes.includes(manifest.defaultSize)) {
     issue.addIssue({
       code: 'custom',
-      path: ['defaultAspectRatio'],
-      message: 'defaultAspectRatio must appear in aspectRatios',
+      path: ['defaultSize'],
+      message: 'defaultSize must appear in sizes',
     })
+  }
+})
+
+/** Strict parser for one bounded Widget state document. */
+export const widgetStateSchema: z.ZodType<WidgetState> = z.record(
+  z.string().min(1).max(128),
+  z.json(),
+).superRefine((state, issue) => {
+  if (Object.keys(state).length > 256) {
+    issue.addIssue({ code: 'custom', message: 'Widget state may contain at most 256 keys' })
+  }
+})
+
+/** Strict parser for the persisted desktop Widget layout. */
+export const widgetLayoutSchema: z.ZodType<WidgetLayoutItem[]> = z.array(z.strictObject({
+  id: widgetIdSchema.transform(WidgetId),
+  size: widgetSizeSchema,
+  column: z.number().int().min(0).max(255),
+  row: z.number().int().min(0).max(65_535),
+})).max(256).superRefine((items, issue) => {
+  const seen = new Set<WidgetId>()
+  for (const [index, item] of items.entries()) {
+    if (seen.has(item.id)) {
+      issue.addIssue({ code: 'custom', path: [index, 'id'], message: `duplicate Widget id '${item.id}'` })
+    }
+    seen.add(item.id)
   }
 })
 
 /**
  * Parse one untrusted manifest value or throw its zod diagnostic.
  * @param value - untrusted decoded manifest value.
- * @returns the strict version 1 manifest.
+ * @returns the strict version 2 manifest.
  */
 export function parseWidgetManifest(value: unknown): WidgetManifest {
   return widgetManifestSchema.parse(value)
+}
+
+/**
+ * Parse an untrusted Widget state document.
+ * @param value - untrusted decoded state value.
+ * @returns validated JSON state.
+ */
+export function parseWidgetState(value: unknown): WidgetState {
+  return widgetStateSchema.parse(value)
+}
+
+/**
+ * Parse an untrusted desktop Widget layout.
+ * @param value - untrusted decoded layout value.
+ * @returns validated logical placements.
+ */
+export function parseWidgetLayout(value: unknown): WidgetLayoutItem[] {
+  return widgetLayoutSchema.parse(value)
 }
 
 /** Installed Widget metadata exposed to Consumers. */
@@ -120,6 +179,7 @@ export type WidgetErrorCode =
   | 'already-installed'
   | 'permission-denied'
   | 'network-failed'
+  | 'invalid-data'
 
 /** Typed failure from Widget provider operations. */
 export class WidgetError extends Error {
@@ -176,6 +236,32 @@ export abstract class Widgets extends Service {
    * @param id - installed Widget identifier.
    */
   abstract remove(id: WidgetId): Promise<void>
+
+  /**
+   * Read one Widget's Host-owned state document.
+   * @param id - installed Widget identifier.
+   * @returns persisted JSON state, or an empty object before the first write.
+   */
+  abstract readState(id: WidgetId): Promise<WidgetState>
+
+  /**
+   * Replace one Widget's Host-owned state document.
+   * @param id - installed Widget identifier.
+   * @param state - complete next JSON state.
+   */
+  abstract writeState(id: WidgetId, state: WidgetState): Promise<void>
+
+  /**
+   * Read the desktop canvas's logical Widget placements.
+   * @returns persisted placements, or an empty layout before the first write.
+   */
+  abstract readLayout(): Promise<WidgetLayoutItem[]>
+
+  /**
+   * Replace the desktop canvas's logical Widget placements.
+   * @param layout - complete next placement list.
+   */
+  abstract writeLayout(layout: WidgetLayoutItem[]): Promise<void>
 
   /**
    * Perform one permission-checked external GET for a Widget.
