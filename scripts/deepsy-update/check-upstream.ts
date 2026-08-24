@@ -13,6 +13,7 @@
  */
 
 import { compareVersions } from '../release/bump.ts'
+import { runUpdateCli } from './cli.ts'
 import { readFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -104,8 +105,5 @@ async function main(): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  void main().catch((error: unknown) => {
-    console.error(`[deepsy-update] ${error instanceof Error ? error.message : String(error)}`)
-    process.exit(1)
-  })
+  runUpdateCli(main)
 }

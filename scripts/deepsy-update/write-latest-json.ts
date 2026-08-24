@@ -8,6 +8,7 @@
 
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { runUpdateCli } from './cli.ts'
 
 /** Per-release manifest attached to every deepsy GitHub Release. */
 export interface ReleaseManifest {
@@ -36,12 +37,9 @@ export function buildReleaseManifest(
 function parseArgv(argv: readonly string[]): Record<string, string> {
   const out: Record<string, string> = {}
   for (const arg of argv) {
-    const match = /^--([a-z-]+)=(.+)$/.exec(arg)
-    if (match !== null) {
-      const key = match[1]
-      const value = match[2]
-      if (key !== undefined && value !== undefined) out[key] = value
-    }
+    const separator = arg.indexOf('=')
+    if (!arg.startsWith('--') || separator < 3 || separator === arg.length - 1) continue
+    out[arg.slice(2, separator)] = arg.slice(separator + 1)
   }
   return out
 }
@@ -61,8 +59,5 @@ async function main(): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  void main().catch((error: unknown) => {
-    console.error(`[deepsy-update] ${error instanceof Error ? error.message : String(error)}`)
-    process.exit(1)
-  })
+  runUpdateCli(main)
 }

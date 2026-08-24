@@ -119,6 +119,23 @@ describe('CI workflow', () => {
       expect(job['runs-on']).toContain("github.repository != 'deepseek-ai/deepseek-harness'")
       expect(job['runs-on']).toContain('ubuntu-latest')
     }
+    for (const job of [node24Coverage, node24Consumers]) {
+      if (!Array.isArray(job.steps)) throw new TypeError('fork Linux jobs must define steps')
+      expect(job.steps).toContainEqual(expect.objectContaining({
+        name: 'Match the canonical Linux PowerShell surface',
+        if: "github.repository != 'deepseek-ai/deepseek-harness'",
+        run: 'sudo mv /usr/bin/pwsh /usr/bin/pwsh.disabled',
+      }))
+    }
+    expect(node24Coverage.env).toMatchObject({
+      DSH_COVERAGE_MAX_WORKERS: expect.stringContaining("github.repository != 'deepseek-ai/deepseek-harness'"),
+      DSH_COVERAGE_PARTITIONS: expect.stringContaining("github.repository != 'deepseek-ai/deepseek-harness'"),
+    })
+    expect(node24Consumers.env).toMatchObject({
+      DSH_GATE_CONCURRENCY: expect.stringContaining("github.repository != 'deepseek-ai/deepseek-harness'"),
+      DSH_SNAPSHOT_MAX_CONCURRENCY: expect.stringContaining("github.repository != 'deepseek-ai/deepseek-harness'"),
+      DSH_WEB_SNAPSHOT_WORKERS: expect.stringContaining("github.repository != 'deepseek-ai/deepseek-harness'"),
+    })
     expect(aggregate['runs-on']).toContain('DSH_CI_FAILOVER_LINUX')
     expect(aggregate['runs-on']).not.toContain('DSH_CI_FAILOVER_WINDOWS')
     expect(aggregate['runs-on']).toContain('vm-backup')

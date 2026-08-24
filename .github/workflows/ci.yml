@@ -103,9 +103,9 @@ jobs:
     env:
       # Partitioning replaces the instrumented share; this budget gives the
       # exempt-heavy gate two workers on both hosted and failover runners.
-      DSH_COVERAGE_MAX_WORKERS: '6'
-      DSH_COVERAGE_PARTITIONS: '4'
-      DSH_GATE_CONCURRENCY: '3'
+      DSH_COVERAGE_MAX_WORKERS: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '2' || '6' }}
+      DSH_COVERAGE_PARTITIONS: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '2' || '4' }}
+      DSH_GATE_CONCURRENCY: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '2' || '3' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -151,6 +151,10 @@ jobs:
           if (( install_status != 0 )); then exit "$install_status"; fi
           exit "$sandbox_status"
 
+      - name: Match the canonical Linux PowerShell surface
+        if: github.repository != 'deepseek-ai/deepseek-harness'
+        run: sudo mv /usr/bin/pwsh /usr/bin/pwsh.disabled
+
       - name: Run exhaustive coverage
         run: pnpm run check:ci:coverage
 
@@ -165,13 +169,13 @@ jobs:
           || 'dsh-ubuntu-24-04-16core' }}
     name: node 24 / snapshots and artifacts
     env:
-      DSH_GATE_CONCURRENCY: '8'
+      DSH_GATE_CONCURRENCY: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '4' || '8' }}
       DSH_NODE_COMPAT_SKIP_TYPECHECK: '1'
       DSH_OXLINT_THREADS: '8'
       DSH_PUBLINT_CONCURRENCY: '8'
-      DSH_WEB_SNAPSHOT_WORKERS: '6'
+      DSH_WEB_SNAPSHOT_WORKERS: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '2' || '6' }}
       # Failover halves snapshot concurrency for the shared 64-core VM.
-      DSH_SNAPSHOT_MAX_CONCURRENCY: ${{ vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '12' || '32' }}
+      DSH_SNAPSHOT_MAX_CONCURRENCY: ${{ github.repository != 'deepseek-ai/deepseek-harness' && '4' || vars.DSH_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]' && '12' || '32' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -227,6 +231,10 @@ jobs:
           wait "$sandbox_pid" || sandbox_status=$?
           if (( install_status != 0 )); then exit "$install_status"; fi
           exit "$sandbox_status"
+
+      - name: Match the canonical Linux PowerShell surface
+        if: github.repository != 'deepseek-ai/deepseek-harness'
+        run: sudo mv /usr/bin/pwsh /usr/bin/pwsh.disabled
 
       - name: Install Playwright Chromium and hosted dependencies
         if: vars.DSH_CI_FAILOVER_LINUX != 'selfhosted' || github.event.pull_request.user.login == 'dependabot[bot]'
