@@ -20,14 +20,17 @@ import z from '@deepseek-ai/schemastery'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
-  WidgetError, WidgetId, Widgets, parseWidgetManifest, type WidgetDocument,
-  type WidgetFetchResult, type WidgetManifest, type WidgetView,
+  WidgetError, WidgetId, Widgets, parseWidgetLayout, parseWidgetManifest, parseWidgetState,
+  type WidgetDocument, type WidgetFetchResult, type WidgetLayoutItem, type WidgetManifest,
+  type WidgetState, type WidgetView,
 } from '@deepseek-ai/dsh-widgets'
 import { BUILT_IN_WIDGETS } from './examples.ts'
 
 const MAX_MANIFEST_BYTES = 64 * 1024
 const MAX_HTML_BYTES = 512 * 1024
 const MAX_FETCH_BYTES = 512 * 1024
+const MAX_STATE_BYTES = 64 * 1024
+const MAX_LAYOUT_BYTES = 128 * 1024
 const FETCH_TIMEOUT_MS = 15_000
 const MAX_REDIRECTS = 3
 
@@ -94,6 +97,8 @@ Apply this workflow to every creation and redesign, including incremental change
 - Keep the entry self-contained: inline its scripts, styles, fonts, and images.
 - Do not add Node.js dependencies, a build step, or a localhost server.
 - For public network data, add each exact HTTPS hostname to \`permissions.network\` and call \`window.dshWidget.fetch(url)\` from the entry document.
+- Store durable interactive data with \`window.dshWidget.state.get()\` and \`window.dshWidget.state.set(nextState)\`. Keep it as one small JSON object; use date keys for state that resets by day.
+- Never use browser storage as the durable source of truth. The Host stores Widget state outside this editable project so refreshes and Agent edits preserve it.
 - Update the Widget name and version in \`widget.json\` when the visible product changes.
 `
 
@@ -226,10 +231,14 @@ export default class LocalWidgets extends Widgets {
   private readonly shouldWatch: boolean
   private readonly watchDebounceMs: number
   private readonly builtIns = new Set(BUILT_IN_WIDGETS.map(widget => widget.id))
+  private readonly stateRoot: string
+  private readonly layoutPath: string
 
   constructor(ctx: Context, config: Config) {
     super(ctx)
     this.root = resolve(config.root ?? join(resolveDshHome(), 'widgets', 'projects'))
+    this.stateRoot = join(this.root, '.state')
+    this.layoutPath = join(this.root, '.layout.json')
     this.shouldSeedExamples = config.seedExamples
     this.shouldWatch = config.watch
     this.watchDebounceMs = config.watchDebounceMs
@@ -336,14 +345,14 @@ export default class LocalWidgets extends Widgets {
     const target = join(this.root, id)
     const staging = await mkdtemp(join(this.root, '.create-'))
     const manifest: WidgetManifest = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id,
       name: 'New Widget',
       version: '0.1.0',
       runtime: 'static',
       entry: 'dist/index.html',
-      aspectRatios: ['1:1'],
-      defaultAspectRatio: '1:1',
+      sizes: ['small', 'medium', 'large'],
+      defaultSize: 'small',
       permissions: { network: [] },
       refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
     }
@@ -408,6 +417,44 @@ export default class LocalWidgets extends Widgets {
       throw new WidgetError('invalid-project', `Managed Widget '${id}' is not a real directory`)
     }
     await rm(target, { recursive: true })
+    await rm(join(this.stateRoot, `${id}.json`), { force: true })
+  }
+
+  async readState(id: WidgetId): Promise<WidgetState> {
+    await this.project(id)
+    const path = join(this.stateRoot, `${id}.json`)
+    try {
+      return parseWidgetState(JSON.parse(await readBounded(path, MAX_STATE_BYTES)))
+    } catch (error) {
+      if (isErrnoException(error) && error.code === 'ENOENT') return {}
+      throw new WidgetError('invalid-data', `Widget '${id}' state is invalid: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  async writeState(id: WidgetId, state: WidgetState): Promise<void> {
+    await this.project(id)
+    const serialized = `${JSON.stringify(parseWidgetState(state), null, 2)}\n`
+    if (Buffer.byteLength(serialized) > MAX_STATE_BYTES) {
+      throw new WidgetError('invalid-data', `Widget '${id}' state exceeds ${MAX_STATE_BYTES} bytes`)
+    }
+    await writeFileAtomic(join(this.stateRoot, `${id}.json`), serialized, { mode: 0o600, dirMode: 0o700 })
+  }
+
+  async readLayout(): Promise<WidgetLayoutItem[]> {
+    try {
+      return parseWidgetLayout(JSON.parse(await readBounded(this.layoutPath, MAX_LAYOUT_BYTES)))
+    } catch (error) {
+      if (isErrnoException(error) && error.code === 'ENOENT') return []
+      throw new WidgetError('invalid-data', `Widget layout is invalid: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  async writeLayout(layout: WidgetLayoutItem[]): Promise<void> {
+    const serialized = `${JSON.stringify(parseWidgetLayout(layout), null, 2)}\n`
+    if (Buffer.byteLength(serialized) > MAX_LAYOUT_BYTES) {
+      throw new WidgetError('invalid-data', `Widget layout exceeds ${MAX_LAYOUT_BYTES} bytes`)
+    }
+    await writeFileAtomic(this.layoutPath, serialized, { mode: 0o600, dirMode: 0o700 })
   }
 
   /**

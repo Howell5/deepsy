@@ -3208,7 +3208,7 @@ export interface Config {
 }
 ```
 
-来源：[`packages/widget/widgets-local/src/index.ts:101`](../packages/widget/widgets-local/src/index.ts)
+来源：[`packages/widget/widgets-local/src/index.ts:106`](../packages/widget/widgets-local/src/index.ts)
 
 <a id="deepseek-aidsh-workflow-worker-thread"></a>
 

@@ -154,8 +154,8 @@ export class FakeApiClient implements IApiClient {
     create: payload => this.record('widget.create', payload, Promise.resolve(ok({
       widget: {
         manifest: {
-          schemaVersion: 1, id: 'widget-new', name: 'New Widget', version: '0.1.0',
-          runtime: 'static', entry: 'dist/index.html', aspectRatios: ['1:1'], defaultAspectRatio: '1:1',
+          schemaVersion: 2, id: 'widget-new', name: 'New Widget', version: '0.1.0',
+          runtime: 'static', entry: 'dist/index.html', sizes: ['small'], defaultSize: 'small',
           permissions: { network: [] }, refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
         },
         sourcePath: '/fixture/widget-new',
@@ -165,8 +165,8 @@ export class FakeApiClient implements IApiClient {
     read: payload => this.record('widget.read', payload, Promise.resolve(ok({
       widget: {
         manifest: {
-          schemaVersion: 1, id: payload.id, name: 'Fixture', version: '1',
-          runtime: 'static', entry: 'dist/index.html', aspectRatios: ['1:1'], defaultAspectRatio: '1:1',
+          schemaVersion: 2, id: payload.id, name: 'Fixture', version: '1',
+          runtime: 'static', entry: 'dist/index.html', sizes: ['small'], defaultSize: 'small',
           permissions: { network: [] }, refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
         },
         sourcePath: '/fixture',
@@ -177,8 +177,8 @@ export class FakeApiClient implements IApiClient {
     install: payload => this.record('widget.install', payload, Promise.resolve(ok({
       widget: {
         manifest: {
-          schemaVersion: 1, id: 'fixture', name: 'Fixture', version: '1',
-          runtime: 'static', entry: 'dist/index.html', aspectRatios: ['1:1'], defaultAspectRatio: '1:1',
+          schemaVersion: 2, id: 'fixture', name: 'Fixture', version: '1',
+          runtime: 'static', entry: 'dist/index.html', sizes: ['small'], defaultSize: 'small',
           permissions: { network: [] }, refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
         },
         sourcePath: '/fixture',
@@ -186,6 +186,10 @@ export class FakeApiClient implements IApiClient {
       },
     }))),
     remove: payload => this.record('widget.remove', payload, Promise.resolve(ok({ removed: true as const }))),
+    stateRead: payload => this.record('widget.state.read', payload, Promise.resolve(ok({ state: {} }))),
+    stateWrite: payload => this.record('widget.state.write', payload, Promise.resolve(ok({ saved: true as const }))),
+    layoutRead: payload => this.record('widget.layout.read', payload, Promise.resolve(ok({ layout: [] }))),
+    layoutWrite: payload => this.record('widget.layout.write', payload, Promise.resolve(ok({ saved: true as const }))),
     fetch: payload => this.record('widget.fetch', payload, Promise.resolve(ok({
       status: 200,
       contentType: 'application/json',

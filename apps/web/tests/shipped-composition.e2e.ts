@@ -251,21 +251,35 @@ it('ships the local Widgets provider with offline and networked examples', async
   const widgets = await scaffold.ctx.widgets.list()
   expect(widgets.map(widget => ({
     id: widget.manifest.id,
-    aspectRatios: widget.manifest.aspectRatios,
+    sizes: widget.manifest.sizes,
     network: widget.manifest.permissions.network,
   }))).toEqual([
-    { id: 'gold-price', aspectRatios: ['16:9'], network: ['xaus.com'] },
-    { id: 'calculator', aspectRatios: ['1:1'], network: [] },
+    { id: 'gold-price', sizes: ['medium', 'large'], network: ['xaus.com'] },
+    { id: 'calculator', sizes: ['small', 'medium', 'large'], network: [] },
   ])
 
   const calculator = await scaffold.ctx.widgets.read(WidgetId('calculator'))
   expect(calculator.html).toContain('Calculator keypad')
+  await scaffold.ctx.widgets.writeState(WidgetId('calculator'), { operation: '120 / 4', result: 30 })
+  expect(await scaffold.ctx.widgets.readState(WidgetId('calculator'))).toEqual({ operation: '120 / 4', result: 30 })
+  await scaffold.ctx.widgets.writeLayout([{
+    id: WidgetId('calculator'),
+    size: 'medium',
+    column: 2,
+    row: 1,
+  }])
+  expect(await scaffold.ctx.widgets.readLayout()).toEqual([{
+    id: 'calculator',
+    size: 'medium',
+    column: 2,
+    row: 1,
+  }])
   const gold = await scaffold.ctx.widgets.read(WidgetId('gold-price'))
   expect(gold.html).toContain("window.dshWidget.fetch('https://xaus.com/api/v1/history')")
 
   const starter = await scaffold.ctx.widgets.create()
   expect(starter).toMatchObject({
-    manifest: { name: 'New Widget', aspectRatios: ['1:1'], permissions: { network: [] } },
+    manifest: { name: 'New Widget', sizes: ['small', 'medium', 'large'], permissions: { network: [] } },
     builtIn: false,
   })
   expect((await scaffold.ctx.widgets.read(starter.manifest.id)).html).toContain('Tell Agent what this should become.')

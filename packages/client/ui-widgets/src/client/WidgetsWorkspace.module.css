@@ -13,9 +13,8 @@
 }
 
 .pageHeader {
-  max-width: 1220px;
   min-height: 42px;
-  margin: 0 auto 18px;
+  margin: 0 0 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -56,10 +55,11 @@
 .importButton,
 .createButton {
   flex: none;
+  height: 34px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  height: 34px;
   padding: 0 12px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
@@ -76,11 +76,9 @@
 }
 
 .importButton:hover,
+.importButton[aria-pressed='true'],
 .createButton:hover:not(:disabled) {
   background: var(--dsw-alias-button-floating-hover);
-}
-
-.createButton:hover:not(:disabled) {
   color: var(--dsw-alias-label-primary);
 }
 
@@ -89,45 +87,68 @@
   opacity: .55;
 }
 
-.grid {
-  max-width: 1220px;
-  margin: 0 auto;
+.canvas {
+  width: 100%;
+  min-height: calc(100% - 60px);
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-flow: dense;
+  grid-template-columns: repeat(var(--widget-columns), minmax(0, 1fr));
+  grid-auto-rows: var(--widget-cell-size);
   gap: 14px;
   padding-bottom: 48px;
 }
 
+.canvasItem {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.canvasItem[data-editing='true'] {
+  transform: scale(.985);
+}
+
+.canvasItem[data-dragging='true'] {
+  opacity: .42;
+}
+
 .card {
-  width: 100%;
-  align-self: start;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 15px;
+  border-radius: 18px;
   background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base));
-  box-shadow: 0 12px 34px rgb(0 0 0 / 6%);
-}
-
-.card[data-aspect-ratio='1:1'],
-.card[data-aspect-ratio='9:16'] {
-  grid-column: span 4;
-}
-
-.card[data-aspect-ratio='16:9'] {
-  grid-column: span 8;
+  box-shadow: 0 12px 34px rgb(0 0 0 / 8%);
 }
 
 .cardHeader {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
   min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding: 6px 8px 6px 11px;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-border-l1) 70%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base)) 90%, transparent);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.card:hover .cardHeader,
+.card:focus-within .cardHeader,
+.canvasItem[data-editing='true'] .cardHeader,
+.detailsCard .cardHeader {
+  opacity: 1;
+  transform: none;
 }
 
 .cardIdentity {
@@ -160,6 +181,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  pointer-events: auto;
 }
 
 .actions button {
@@ -182,7 +204,7 @@
   color: var(--dsw-alias-label-primary);
 }
 
-.aspectRatio {
+.size {
   height: 26px;
   display: inline-flex;
   align-items: center;
@@ -200,19 +222,49 @@
   font: 600 11px/1 system-ui;
 }
 
-.actions .editButton:hover {
-  background: var(--dsw-alias-button-floating-hover);
-}
-
 .frame {
   position: relative;
   width: 100%;
-  flex: none;
+  height: 100%;
   overflow: hidden;
   background: #f4f1ea;
 }
 
+.frame iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.dragSurface {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border: 2px solid color-mix(in srgb, var(--dsw-alias-label-primary) 14%, transparent);
+  border-radius: 18px;
+  background: transparent;
+  cursor: grab;
+}
+
+.dragSurface:active {
+  cursor: grabbing;
+}
+
+.dragSurface:focus-visible {
+  outline: 3px solid var(--dsw-alias-label-primary);
+  outline-offset: 3px;
+}
+
 .detailsCard {
+  position: relative;
+  inset: auto;
   min-height: 100%;
   justify-content: flex-start;
   border: 0;
@@ -220,11 +272,28 @@
   box-shadow: none;
 }
 
+.detailsCard .cardHeader {
+  position: relative;
+  flex: none;
+  pointer-events: auto;
+}
+
 .detailsCard .frame {
   width: calc(100% - 24px);
+  height: auto;
+  flex: none;
   margin: 12px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
+}
+
+.detailsCard[data-size='small'] .frame,
+.detailsCard[data-size='large'] .frame {
+  aspect-ratio: 1;
+}
+
+.detailsCard[data-size='medium'] .frame {
+  aspect-ratio: 2;
 }
 
 .detailsStatus {
@@ -237,29 +306,6 @@
   color: var(--dsw-alias-label-secondary);
   font-size: 12px;
   text-align: center;
-}
-
-.card[data-aspect-ratio='1:1'] .frame {
-  aspect-ratio: 1;
-}
-
-.card[data-aspect-ratio='16:9'] .frame {
-  aspect-ratio: 16 / 9;
-}
-
-.card[data-aspect-ratio='9:16'] .frame {
-  aspect-ratio: 9 / 16;
-}
-
-.frame iframe {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  overflow: hidden;
-  background: transparent;
 }
 
 .status,
@@ -275,9 +321,9 @@
 }
 
 .error {
+  z-index: 1;
   flex-direction: column;
   gap: 8px;
-  z-index: 1;
   background: #f4f1ea;
   color: #843f30;
   text-align: center;
@@ -289,9 +335,7 @@
 }
 
 .empty {
-  max-width: 1220px;
   min-height: 240px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -313,29 +357,13 @@
 }
 
 .pageError {
-  max-width: 1220px;
-  margin: 0 auto 14px;
+  margin: 0 0 14px;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, #b75038 45%, transparent);
   border-radius: 9px;
   background: color-mix(in srgb, #b75038 8%, transparent);
   color: var(--dsw-alias-label-primary);
   font-size: 12px;
-}
-
-@media (max-width: 1050px) {
-  .grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .card[data-aspect-ratio='1:1'],
-  .card[data-aspect-ratio='9:16'] {
-    grid-column: span 3;
-  }
-
-  .card[data-aspect-ratio='16:9'] {
-    grid-column: span 6;
-  }
 }
 
 @media (max-width: 680px) {
@@ -365,28 +393,13 @@
     margin-top: 5px;
     white-space: normal;
   }
-
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .card[data-aspect-ratio] {
-    grid-column: span 1;
-  }
-
-  .card[data-aspect-ratio='1:1'] {
-    max-width: 480px;
-  }
-
-  .card[data-aspect-ratio='9:16'] {
-    max-width: 360px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .importButton,
   .createButton,
-  .actions button {
+  .canvasItem,
+  .cardHeader {
     transition: none;
   }
 }

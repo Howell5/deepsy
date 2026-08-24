@@ -81,6 +81,8 @@ describe('CI workflow', () => {
     expect(windowsNative['runs-on']).toContain('self-hosted')
     expect(windowsNative['runs-on']).toContain('dsh-win-ci')
     expect(windowsNative['runs-on']).toContain('dsh-windows-2025-16core')
+    expect(windowsNative['runs-on']).toContain("github.repository != 'deepseek-ai/deepseek-harness'")
+    expect(windowsNative['runs-on']).toContain('windows-latest')
     expect(windowsNative.name).toBe('windows node 24 / native complete')
     expect(windowsNative.if).toBe("github.event_name == 'pull_request'")
     expect(windowsNative.env).toMatchObject({
@@ -114,6 +116,27 @@ describe('CI workflow', () => {
       expect(job['runs-on'], `${jobName} runs-on must use the Linux failover switch`).toContain('DSH_CI_FAILOVER_LINUX')
       expect(job['runs-on'], `${jobName} runs-on must not use the Windows failover switch`).not.toContain('DSH_CI_FAILOVER_WINDOWS')
       expect(job['runs-on']).toContain('vm-backup')
+      expect(job['runs-on']).toContain("github.repository != 'deepseek-ai/deepseek-harness'")
+      expect(job['runs-on']).toContain('ubuntu-latest')
+    }
+    for (const job of [node24Coverage, node24Consumers]) {
+      if (!Array.isArray(job.steps)) throw new TypeError('fork Linux jobs must define steps')
+      expect(job.steps).toContainEqual(expect.objectContaining({
+        name: 'Match the canonical Linux PowerShell surface',
+        if: "github.repository != 'deepseek-ai/deepseek-harness'",
+        run: 'sudo mv /usr/bin/pwsh /usr/bin/pwsh.disabled',
+      }))
+    }
+    if (!isRecord(node24Coverage.env) || !isRecord(node24Consumers.env)) {
+      throw new TypeError('fork Linux jobs must define environment limits')
+    }
+    for (const key of ['DSH_COVERAGE_MAX_WORKERS', 'DSH_COVERAGE_PARTITIONS']) {
+      expect(node24Coverage.env[key]).toBeTypeOf('string')
+      expect(node24Coverage.env[key]).toContain("github.repository != 'deepseek-ai/deepseek-harness'")
+    }
+    for (const key of ['DSH_GATE_CONCURRENCY', 'DSH_SNAPSHOT_MAX_CONCURRENCY', 'DSH_WEB_SNAPSHOT_WORKERS']) {
+      expect(node24Consumers.env[key]).toBeTypeOf('string')
+      expect(node24Consumers.env[key]).toContain("github.repository != 'deepseek-ai/deepseek-harness'")
     }
     expect(aggregate['runs-on']).toContain('DSH_CI_FAILOVER_LINUX')
     expect(aggregate['runs-on']).not.toContain('DSH_CI_FAILOVER_WINDOWS')

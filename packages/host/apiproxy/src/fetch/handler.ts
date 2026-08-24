@@ -71,8 +71,10 @@ import {
   subagentPromptRequestSchema,
 } from '../api/subagents.schema.ts'
 import {
-  widgetCreateRequestSchema, widgetFetchRequestSchema, widgetInstallRequestSchema, widgetListRequestSchema,
-  widgetReadRequestSchema, widgetRemoveRequestSchema,
+  widgetCreateRequestSchema, widgetFetchRequestSchema, widgetInstallRequestSchema,
+  widgetLayoutReadRequestSchema, widgetLayoutWriteRequestSchema, widgetListRequestSchema,
+  widgetReadRequestSchema, widgetRemoveRequestSchema, widgetStateReadRequestSchema,
+  widgetStateWriteRequestSchema,
 } from '../api/widgets.schema.ts'
 
 /**
@@ -149,6 +151,10 @@ const UNARY_ROUTES: UnaryRoutes = {
   'widget.read': { schema: widgetReadRequestSchema, invoke: (api, r) => api.widgets.read(r) },
   'widget.install': { schema: widgetInstallRequestSchema, invoke: (api, r) => api.widgets.install(r) },
   'widget.remove': { schema: widgetRemoveRequestSchema, invoke: (api, r) => api.widgets.remove(r) },
+  'widget.state.read': { schema: widgetStateReadRequestSchema, invoke: (api, r) => api.widgets.stateRead(r) },
+  'widget.state.write': { schema: widgetStateWriteRequestSchema, invoke: (api, r) => api.widgets.stateWrite(r) },
+  'widget.layout.read': { schema: widgetLayoutReadRequestSchema, invoke: (api, r) => api.widgets.layoutRead(r) },
+  'widget.layout.write': { schema: widgetLayoutWriteRequestSchema, invoke: (api, r) => api.widgets.layoutWrite(r) },
   'widget.fetch': { schema: widgetFetchRequestSchema, invoke: (api, r, signal) => api.widgets.fetch(r, signal) },
 }
 

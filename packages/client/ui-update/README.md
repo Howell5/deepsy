@@ -11,7 +11,7 @@ Renders an update hint in the bottom-right of the settings panel when the packag
 ## Behavior
 
 - Detection source: `https://api.github.com/repos/Howell5/deepsy/releases?per_page=1` (CORS-enabled; newest release first, prereleases included).
-- Current version: the `settings.footer` owner prop `currentVersion`, injected by the settings shell from `<meta name="dsh-version">` on the desktop startup page. Web-only mode has no meta tag and falls back to `0.0.0`, under which any published release reads as an update.
+- Current version: the `settings.footer` owner prop `currentVersion`, injected by the settings shell from `<meta name="dsh-version">` on the desktop startup page. Web-only mode has no meta tag and falls back to `0.0.0`, so the indicator stays silent.
 - Comparison: npm `semver` strict greater-than, rc-aware.
 
 ## Model Experience
@@ -25,4 +25,4 @@ None; this package neither assembles nor sends a provider request.
 ## Known Limitations and Deferred Work
 
 - Product copy is inline Chinese; locale extraction is deferred.
-- Web-only mode cannot know the packaged version (no meta tag); acceptable for the pre-release stage where every release is an update.
+- Web-only mode cannot know the packaged version (no meta tag), so it cannot offer a reliable update comparison.

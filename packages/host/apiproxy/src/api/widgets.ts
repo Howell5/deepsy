@@ -4,19 +4,36 @@ import type { RpcRequest, RpcResponse } from './rpc.ts'
 
 /** Client-safe Widget manifest view. */
 export interface WidgetManifestView {
-  schemaVersion: 1
+  schemaVersion: 2
   id: string
   name: string
   version: string
   runtime: 'static'
   entry: string
-  aspectRatios: Array<'1:1' | '16:9' | '9:16'>
-  defaultAspectRatio: '1:1' | '16:9' | '9:16'
+  sizes: WidgetSize[]
+  defaultSize: WidgetSize
   permissions: { network: string[] }
   refresh: {
     mode: 'manual' | 'on-open' | 'visible-interval'
     minimumIntervalSeconds: number
   }
+}
+
+/** Semantic desktop Widget size. */
+export type WidgetSize = 'small' | 'medium' | 'large'
+
+/** JSON object persisted for one Widget. */
+export type WidgetState = { [key: string]: WidgetStateValue }
+
+/** Lossless JSON value accepted by Widget state storage. */
+export type WidgetStateValue = null | boolean | number | string | WidgetStateValue[] | WidgetState
+
+/** One logical desktop-canvas placement. */
+export interface WidgetLayoutItem {
+  id: string
+  size: WidgetSize
+  column: number
+  row: number
 }
 
 /** Installed Widget metadata presented to the desktop client. */
@@ -38,6 +55,14 @@ export interface WidgetsApi {
   install(request: RpcRequest<{ path: string }>): Promise<RpcResponse<{ widget: WidgetView }>>
   /** Remove one non-built-in managed Widget. */
   remove(request: RpcRequest<{ id: string }>): Promise<RpcResponse<{ removed: true }>>
+  /** Read one Widget's Host-owned state. */
+  stateRead(request: RpcRequest<{ id: string }>): Promise<RpcResponse<{ state: WidgetState }>>
+  /** Replace one Widget's Host-owned state. */
+  stateWrite(request: RpcRequest<{ id: string; state: WidgetState }>): Promise<RpcResponse<{ saved: true }>>
+  /** Read logical desktop-canvas placements. */
+  layoutRead(request: RpcRequest<{}>): Promise<RpcResponse<{ layout: WidgetLayoutItem[] }>>
+  /** Replace logical desktop-canvas placements. */
+  layoutWrite(request: RpcRequest<{ layout: WidgetLayoutItem[] }>): Promise<RpcResponse<{ saved: true }>>
   /** Perform one permission-checked external GET for the calling Widget. */
   fetch(
     request: RpcRequest<{ id: string; url: string }>,

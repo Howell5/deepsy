@@ -7,27 +7,27 @@ export interface BuiltInWidget {
 }
 
 const calculatorManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 'calculator',
   name: 'Quick Calculator',
   version: '1.1.0',
   runtime: 'static',
   entry: 'dist/index.html',
-  aspectRatios: ['1:1'],
-  defaultAspectRatio: '1:1',
+  sizes: ['small', 'medium', 'large'],
+  defaultSize: 'small',
   permissions: { network: [] },
   refresh: { mode: 'manual', minimumIntervalSeconds: 30 },
 }
 
 const goldManifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 'gold-price',
   name: 'Gold / USD',
   version: '1.1.0',
   runtime: 'static',
   entry: 'dist/index.html',
-  aspectRatios: ['16:9'],
-  defaultAspectRatio: '16:9',
+  sizes: ['medium', 'large'],
+  defaultSize: 'medium',
   permissions: { network: ['xaus.com'] },
   refresh: { mode: 'on-open', minimumIntervalSeconds: 300 },
 }

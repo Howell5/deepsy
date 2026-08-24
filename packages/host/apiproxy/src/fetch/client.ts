@@ -68,8 +68,10 @@ import {
   subagentPromptValueSchema,
 } from '../api/subagents.schema.ts'
 import {
-  widgetCreateValueSchema, widgetFetchValueSchema, widgetInstallValueSchema, widgetListValueSchema,
-  widgetReadValueSchema, widgetRemoveValueSchema,
+  widgetCreateValueSchema, widgetFetchValueSchema, widgetInstallValueSchema,
+  widgetLayoutReadValueSchema, widgetLayoutWriteValueSchema, widgetListValueSchema,
+  widgetReadValueSchema, widgetRemoveValueSchema, widgetStateReadValueSchema,
+  widgetStateWriteValueSchema,
 } from '../api/widgets.schema.ts'
 
 /**
@@ -171,6 +173,10 @@ export interface IApiClient {
     read(payload: RequestPayload<'widget.read'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.read'>>>
     install(payload: RequestPayload<'widget.install'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.install'>>>
     remove(payload: RequestPayload<'widget.remove'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.remove'>>>
+    stateRead(payload: RequestPayload<'widget.state.read'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.state.read'>>>
+    stateWrite(payload: RequestPayload<'widget.state.write'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.state.write'>>>
+    layoutRead(payload: RequestPayload<'widget.layout.read'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.layout.read'>>>
+    layoutWrite(payload: RequestPayload<'widget.layout.write'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.layout.write'>>>
     fetch(payload: RequestPayload<'widget.fetch'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'widget.fetch'>>>
   }
   /** client-response passthrough (rpcId is a backfill of the server-request's id — never minted here). */
@@ -239,6 +245,10 @@ const UNARY_VALUE_SCHEMAS: { [K in keyof RpcMethodMap]: z.ZodType<Wire<ResponseV
   'widget.read': widgetReadValueSchema,
   'widget.install': widgetInstallValueSchema,
   'widget.remove': widgetRemoveValueSchema,
+  'widget.state.read': widgetStateReadValueSchema,
+  'widget.state.write': widgetStateWriteValueSchema,
+  'widget.layout.read': widgetLayoutReadValueSchema,
+  'widget.layout.write': widgetLayoutWriteValueSchema,
   'widget.fetch': widgetFetchValueSchema,
 }
 
@@ -524,6 +534,10 @@ export abstract class AbstractApiClient implements IApiClient {
     read: (payload, signal) => this.callUnary('widget.read', payload, signal),
     install: (payload, signal) => this.callUnary('widget.install', payload, signal),
     remove: (payload, signal) => this.callUnary('widget.remove', payload, signal),
+    stateRead: (payload, signal) => this.callUnary('widget.state.read', payload, signal),
+    stateWrite: (payload, signal) => this.callUnary('widget.state.write', payload, signal),
+    layoutRead: (payload, signal) => this.callUnary('widget.layout.read', payload, signal),
+    layoutWrite: (payload, signal) => this.callUnary('widget.layout.write', payload, signal),
     fetch: (payload, signal) => this.callUnary('widget.fetch', payload, signal),
   }
 

@@ -14,4 +14,9 @@ describe('fixed Widget canvas document', () => {
     const document = instrumentWidgetHtml('<main>Widget</main>')
     expect(document.indexOf('data-dsh-widget-canvas')).toBeLessThan(document.indexOf('<main>'))
   })
+
+  it('exposes Host-owned state beside the permission-scoped fetch bridge', () => {
+    const document = instrumentWidgetHtml('<main>Widget</main>')
+    expect(document).toContain("state:{get:()=>request('state.read'),set:state=>request('state.write',{state})}")
+  })
 })

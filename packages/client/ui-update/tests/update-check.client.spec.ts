@@ -41,9 +41,14 @@ describe('resolveUpdateInfo', () => {
     expect(info.latest).toBe('0.1.0-rc.6')
   })
 
-  it('treats any release as an update when the current version is unknown', () => {
+  it('stays silent when the current version is unknown', () => {
     const info = resolveUpdateInfo(UNKNOWN_VERSION, [release('v0.1.0-rc.6')])
-    expect(info.updateAvailable).toBe(true)
+    expect(info).toEqual({
+      current: UNKNOWN_VERSION,
+      latest: null,
+      updateAvailable: false,
+      url: null,
+    })
   })
 
   it('reports no update when no valid release exists', () => {

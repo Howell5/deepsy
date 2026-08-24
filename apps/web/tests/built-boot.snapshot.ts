@@ -56,7 +56,15 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
   // a Session below returns to Conversation.
   fireEvent.click(await screen.findByRole('button', { name: 'Widgets' }))
   expect(await screen.findByRole('heading', { name: 'Widgets' })).toBeTruthy()
-  expect(await screen.findByRole('heading', { name: 'Calculator' })).toBeTruthy()
+  const calculatorHeading = await screen.findByRole('heading', { name: 'Calculator' })
+  const editableCalculatorCard = calculatorHeading.closest('article')
+  if (editableCalculatorCard === null) throw new Error('Calculator Widget card missing')
+  fireEvent.click(screen.getByRole('button', { name: 'Edit layout' }))
+  const moveCalculator = screen.getByRole('button', { name: 'Move Widget: Calculator' })
+  fireEvent.click(within(editableCalculatorCard).getByRole('button', { name: 'small' }))
+  expect(within(editableCalculatorCard).getByRole('button', { name: 'medium' })).toBeTruthy()
+  fireEvent.keyDown(moveCalculator, { key: 'ArrowRight' })
+  fireEvent.click(screen.getByRole('button', { name: 'Done' }))
 
   // New Widget is the Agent-first path: create a managed starter, adopt it as
   // an ordinary Workspace, and open its blank Session with a live preview.

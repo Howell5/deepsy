@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { IApiClient, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { IApiClient, WidgetSize, WidgetState, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconCloseOutline16, IconEllipsisOutline16,
   IconFolderOpenOutline16, IconRefreshOutline16, Menu,
@@ -15,10 +15,10 @@ export type WidgetChangeSubscriber = (listener: (id: string) => void) => () => v
 interface WidgetFrameProps {
   api: IApiClient
   widget: WidgetView
-  aspectRatio: '1:1' | '16:9' | '9:16'
+  size: WidgetSize
   t: (key: WidgetsKey) => string
   subscribeChanges: WidgetChangeSubscriber
-  onCycleAspectRatio?: () => void
+  onCycleSize?: () => void
   onEdit?: () => void
   onClose?: () => void
   variant?: 'card' | 'details'
@@ -28,8 +28,9 @@ interface BridgeRequest {
   dshWidget: 1
   kind: 'request'
   requestId: string
-  method: 'fetch'
-  url: string
+  method: 'fetch' | 'state.read' | 'state.write'
+  url?: unknown
+  state?: unknown
 }
 
 interface BridgeLayout {
@@ -46,10 +47,10 @@ interface BridgeLayout {
 export function WidgetFrame({
   api,
   widget,
-  aspectRatio,
+  size,
   t,
   subscribeChanges,
-  onCycleAspectRatio,
+  onCycleSize,
   onEdit,
   onClose,
   variant = 'card',
@@ -89,16 +90,14 @@ export function WidgetFrame({
       && typeof message.overflow === 'boolean'
     ) {
       setLayoutError(message.overflow
-        ? `${t('overflowDetail')} (${aspectRatio})`
+        ? `${t('overflowDetail')} (${size})`
         : undefined)
       return
     }
     if (
       message?.dshWidget !== 1
       || message.kind !== 'request'
-      || message.method !== 'fetch'
       || typeof message.requestId !== 'string'
-      || typeof message.url !== 'string'
     ) return
     const reply = (payload: object) => {
       iframe.current?.contentWindow?.postMessage({
@@ -108,13 +107,34 @@ export function WidgetFrame({
         ...payload,
       }, '*')
     }
-    api.widgets.fetch({ id, url: message.url }).then(({ result }) => {
-      if (result.ok) reply({ ok: true, value: result.value })
-      else reply({ ok: false, error: result.error.message })
+    const operation = async (): Promise<unknown> => {
+      if (message.method === 'fetch') {
+        if (typeof message.url !== 'string') throw new Error('Widget fetch URL must be a string')
+        const { result } = await api.widgets.fetch({ id, url: message.url })
+        if (!result.ok) throw new Error(result.error.message)
+        return result.value
+      }
+      if (message.method === 'state.read') {
+        const { result } = await api.widgets.stateRead({ id })
+        if (!result.ok) throw new Error(result.error.message)
+        return result.value.state
+      }
+      if (message.method === 'state.write') {
+        if (typeof message.state !== 'object' || message.state === null || Array.isArray(message.state)) {
+          throw new Error('Widget state must be a JSON object')
+        }
+        const { result } = await api.widgets.stateWrite({ id, state: message.state as WidgetState })
+        if (!result.ok) throw new Error(result.error.message)
+        return undefined
+      }
+      throw new Error('Unknown Widget bridge method')
+    }
+    void operation().then((value) => {
+      reply({ ok: true, value })
     }).catch((cause: unknown) => {
       reply({ ok: false, error: cause instanceof Error ? cause.message : String(cause) })
     })
-  }, [api, aspectRatio, id, t])
+  }, [api, id, size, t])
 
   useEffect(() => {
     window.addEventListener('message', onMessage)
@@ -136,7 +156,7 @@ export function WidgetFrame({
   return (
     <article
       className={`${css.card}${variant === 'details' ? ` ${css.detailsCard}` : ''}`}
-      data-aspect-ratio={aspectRatio}
+      data-size={size}
     >
       <header className={css.cardHeader}>
         <div className={css.cardIdentity}>
@@ -144,9 +164,9 @@ export function WidgetFrame({
           <span className={css.badge}>{badge}</span>
         </div>
         <div className={css.actions}>
-          {widget.manifest.aspectRatios.length > 1 && onCycleAspectRatio !== undefined
-            ? <button type="button" title={t('aspectRatio')} onClick={onCycleAspectRatio}>{aspectRatio}</button>
-            : <span className={css.aspectRatio}>{aspectRatio}</span>}
+          {widget.manifest.sizes.length > 1 && onCycleSize !== undefined
+            ? <button type="button" title={t('size')} onClick={onCycleSize}>{size}</button>
+            : <span className={css.size}>{size}</span>}
           {variant === 'card' && onEdit !== undefined && (
             <button type="button" className={css.editButton} title={t('edit')} onClick={onEdit}>
               <IconSparkle16 />
