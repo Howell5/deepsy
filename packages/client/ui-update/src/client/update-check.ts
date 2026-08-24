@@ -59,10 +59,13 @@ export function resolveUpdateInfo(
   currentVersion: string,
   releases: readonly DeepsyRelease[],
 ): UpdateInfo {
+  if (currentVersion === UNKNOWN_VERSION) {
+    return { current: currentVersion, latest: null, updateAvailable: false, url: null }
+  }
   for (const release of releases) {
     const latest = parseReleaseTag(release.tagName)
     if (latest === null) continue
-    const updateAvailable = currentVersion === UNKNOWN_VERSION || semver.gt(latest, currentVersion)
+    const updateAvailable = semver.gt(latest, currentVersion)
     return { current: currentVersion, latest, updateAvailable, url: release.htmlUrl }
   }
   return { current: currentVersion, latest: null, updateAvailable: false, url: null }
