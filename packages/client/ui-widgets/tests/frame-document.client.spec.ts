@@ -17,6 +17,14 @@ describe('fixed Widget canvas document', () => {
 
   it('exposes Host-owned state beside the permission-scoped fetch bridge', () => {
     const document = instrumentWidgetHtml('<main>Widget</main>')
+    expect(document).toContain("displayMode:'compact'")
     expect(document).toContain("state:{get:()=>request('state.read'),set:state=>request('state.write',{state})}")
+  })
+
+  it('exposes expanded presentation and asks the Host to open on double-click', () => {
+    const document = instrumentWidgetHtml('<main>Widget</main>', 'expanded')
+    expect(document).toContain("displayMode:'expanded'")
+    expect(document).toContain("kind:'open'")
+    expect(document).toContain("addEventListener('dblclick'")
   })
 })

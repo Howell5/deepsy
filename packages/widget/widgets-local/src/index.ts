@@ -99,6 +99,7 @@ Apply this workflow to every creation and redesign, including incremental change
 - For public network data, add each exact HTTPS hostname to \`permissions.network\` and call \`window.dshWidget.fetch(url)\` from the entry document.
 - Store durable interactive data with \`window.dshWidget.state.get()\` and \`window.dshWidget.state.set(nextState)\`. Keep it as one small JSON object; use date keys for state that resets by day.
 - Never use browser storage as the durable source of truth. The Host stores Widget state outside this editable project so refreshes and Agent edits preserve it.
+- Treat \`small\`, \`medium\`, and \`large\` only as compact canvas sizes. Read \`window.dshWidget.displayMode\` (\`compact\` or \`expanded\`) and reveal useful detail or controls in expanded mode without changing the entry, state object, or permissions.
 - Update the Widget name and version in \`widget.json\` when the visible product changes.
 `
 

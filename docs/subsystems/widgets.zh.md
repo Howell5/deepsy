@@ -20,7 +20,7 @@ Widgets 子系统为桌面客户端安装本地静态微型应用。[`ctx.widget
 
 桌面端的**用 Agent 编辑**操作会把受管理项目路径注册为普通 Workspace，并在 Conversation 中打开其可复用空白会话。通用 `details.application` slot 在右栏承载实时 Widget 预览。精确受管理路径匹配会同时向空白 Hero 和活跃会话页头贡献预览开关，工作区级浏览器偏好会在普通 Session 导航后恢复该栏。本地提供方监听受管理项目，并通过 Remote 白名单转发 `widgets/changed(id)`；文件写入后，匹配的 iframe 会重新读取经过校验的文档。仅打开编辑界面绝不会发送模型请求。
 
-桌面工作台把完整中间区域作为逻辑网格。编辑模式在每个 iframe 上方放置交互层，使整张卡片可以拖动或用方向键移动；指针目标会吸附到单元格并避开已占用范围。宿主持久化明确位置，较窄窗口可以临时约束并重排显示，但不会覆盖保存的桌面布局。Agent 编写的脚本通过与网络请求相同且校验消息来源的 `postMessage` 桥接调用 `window.dshWidget.state.get()` 和 `state.set(nextState)`；frame 不能选择其他 Widget id，也不能访问存储文件。
+桌面工作台把完整中间区域作为逻辑网格。编辑模式在每个 iframe 上方放置交互层，使整张卡片可以拖动或用方向键移动；指针目标会吸附到单元格并避开已占用范围。宿主持久化明确位置，较窄窗口可以临时约束并重排显示，但不会覆盖保存的桌面布局。退出编辑模式后，双击或明确的控件会在模态框中打开同一个入口，Escape 会将其关闭。`window.dshWidget.displayMode` 区分 `compact` 与 `expanded` 呈现，不改变 manifest 尺寸、Widget 身份、状态、权限或沙箱策略。Agent 编写的脚本通过与网络请求相同且校验消息来源的 `postMessage` 桥接调用 `window.dshWidget.state.get()` 和 `state.set(nextState)`；frame 不能选择其他 Widget id，也不能访问存储文件。
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

@@ -87,6 +87,7 @@ describe('LocalWidgets', () => {
       const instructions = await readFile(join(first.sourcePath, 'AGENTS.md'), 'utf8')
       expect(instructions).toContain('window.dshWidget.fetch(url)')
       expect(instructions).toContain('window.dshWidget.state.get()')
+      expect(instructions).toContain('window.dshWidget.displayMode')
       expect(instructions).toContain('use date keys for state that resets by day')
       expect(instructions).toContain('Apply this workflow to every creation and redesign, including incremental changes.')
       expect(instructions).toContain('Form one private design read before editing')

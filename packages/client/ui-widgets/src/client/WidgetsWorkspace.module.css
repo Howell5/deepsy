@@ -272,6 +272,35 @@
   box-shadow: none;
 }
 
+.expandedDialog {
+  width: min(1200px, calc(100vw - 48px));
+  height: min(820px, calc(100vh - 48px));
+  padding: 0;
+}
+
+.expandedCard {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 23px;
+  box-shadow: none;
+}
+
+.expandedCard .cardHeader {
+  position: relative;
+  flex: none;
+  pointer-events: auto;
+  opacity: 1;
+  transform: none;
+}
+
+.expandedCard .frame {
+  flex: 1;
+  min-height: 0;
+}
+
 .detailsCard .cardHeader {
   position: relative;
   flex: none;
@@ -392,6 +421,11 @@
   .pageHeader p {
     margin-top: 5px;
     white-space: normal;
+  }
+
+  .expandedDialog {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
   }
 }
 

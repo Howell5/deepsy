@@ -6,7 +6,9 @@ import type {
   IApiClient, WidgetLayoutItem, WidgetView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
-import { IconFolderOpenOutline16, IconPlusOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import {
+  IconFolderOpenOutline16, IconPlusOutline16, Modal,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { WidgetFrame, type WidgetChangeSubscriber } from './WidgetFrame.tsx'
 import {
@@ -48,6 +50,7 @@ export function WidgetsWorkspace({
   const [error, setError] = useState<string>()
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [expandedId, setExpandedId] = useState<string>()
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -69,6 +72,10 @@ export function WidgetsWorkspace({
   }, [api])
 
   useEffect(() => { void reload() }, [reload])
+
+  useEffect(() => {
+    if (active !== 'widgets') setExpandedId(undefined)
+  }, [active])
 
   useEffect(() => {
     const element = canvas.current
@@ -219,6 +226,10 @@ export function WidgetsWorkspace({
     () => new Map(displayedLayout.map(item => [item.id, item])),
     [displayedLayout],
   )
+  const expandedWidget = widgets.find(widget => widget.manifest.id === expandedId)
+  const expandedSize = expandedId === undefined
+    ? undefined
+    : placements.get(expandedId)?.size ?? expandedWidget?.manifest.defaultSize
   const rows = widgetCanvasRows(displayedLayout)
   const canvasStyle = {
     '--widget-columns': columns,
@@ -299,15 +310,18 @@ export function WidgetsWorkspace({
                 gridRow: `${String(item.row + 1)} / span ${String(span.rows)}`,
               }}
             >
-              <WidgetFrame
-                api={api}
-                widget={widget}
-                size={item.size}
-                t={t}
-                subscribeChanges={subscribeChanges}
-                {...editingLayout ? { onCycleSize: () => { cycleSize(widget, item) } } : {}}
-                onEdit={() => { void edit(widget) }}
-              />
+              {expandedId !== widget.manifest.id && (
+                <WidgetFrame
+                  api={api}
+                  widget={widget}
+                  size={item.size}
+                  t={t}
+                  subscribeChanges={subscribeChanges}
+                  {...editingLayout ? { onCycleSize: () => { cycleSize(widget, item) } } : {}}
+                  onEdit={() => { void edit(widget) }}
+                  {...editingLayout ? {} : { onExpand: () => { setExpandedId(widget.manifest.id) } }}
+                />
+              )}
               {editingLayout && (
                 <button
                   type="button"
@@ -322,6 +336,26 @@ export function WidgetsWorkspace({
           )
         })}
       </section>
+      <Modal
+        open={expandedWidget !== undefined}
+        onClose={() => { setExpandedId(undefined) }}
+        title={expandedWidget?.manifest.name ?? t('expanded')}
+        closeLabel={t('closeExpanded')}
+        className={css.expandedDialog ?? ''}
+        headless
+      >
+        {expandedWidget !== undefined && expandedSize !== undefined && (
+          <WidgetFrame
+            api={api}
+            widget={expandedWidget}
+            size={expandedSize}
+            t={t}
+            subscribeChanges={subscribeChanges}
+            displayMode="expanded"
+            onClose={() => { setExpandedId(undefined) }}
+          />
+        )}
+      </Modal>
     </main>
   )
 }
