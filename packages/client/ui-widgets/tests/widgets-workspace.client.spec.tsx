@@ -92,7 +92,7 @@ describe('Widgets workspace canvas', () => {
     expect(frame.getAttribute('srcdoc')).toContain("displayMode:'expanded'")
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'closeExpanded' }))
-    const compactFrame = await within(view.container).findByTitle('Calculator')
+    const compactFrame = (await within(view.container).findByTitle('Calculator')) as HTMLIFrameElement
     expect(read).toHaveBeenCalledTimes(3)
 
     const openEvent = new MessageEvent('message', {
