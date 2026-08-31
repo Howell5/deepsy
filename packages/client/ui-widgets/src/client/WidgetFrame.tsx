@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { IApiClient, WidgetSize, WidgetState, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconCloseOutline16, IconEllipsisOutline16,
-  IconFolderOpenOutline16, IconRefreshOutline16, Menu,
+  IconFolderOpenOutline16, IconFullscreenOutline16, IconRefreshOutline16, Menu,
   IconSparkle16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { WidgetsKey } from './locales.ts'
-import { instrumentWidgetHtml } from './frame-document.ts'
+import { instrumentWidgetHtml, type WidgetDisplayMode } from './frame-document.ts'
 import css from './WidgetsWorkspace.module.css'
 
 /** Subscribe to managed Widget project changes by id. */
@@ -18,8 +18,10 @@ interface WidgetFrameProps {
   size: WidgetSize
   t: (key: WidgetsKey) => string
   subscribeChanges: WidgetChangeSubscriber
+  displayMode?: WidgetDisplayMode
   onCycleSize?: () => void
   onEdit?: () => void
+  onExpand?: () => void
   onClose?: () => void
   variant?: 'card' | 'details'
 }
@@ -43,6 +45,11 @@ interface BridgeLayout {
   viewportHeight: number
 }
 
+interface BridgeOpen {
+  dshWidget: 1
+  kind: 'open'
+}
+
 /** One isolated fixed-canvas Widget and its Host bridge. */
 export function WidgetFrame({
   api,
@@ -50,8 +57,10 @@ export function WidgetFrame({
   size,
   t,
   subscribeChanges,
+  displayMode = 'compact',
   onCycleSize,
   onEdit,
+  onExpand,
   onClose,
   variant = 'card',
 }: WidgetFrameProps) {
@@ -74,23 +83,27 @@ export function WidgetFrame({
     setLayoutError(undefined)
     api.widgets.read({ id }, abort.signal).then(({ result }) => {
       if (!result.ok) throw new Error(result.error.message)
-      setHtml(instrumentWidgetHtml(result.value.html))
+      setHtml(instrumentWidgetHtml(result.value.html, displayMode))
     }).catch((cause: unknown) => {
       if (!abort.signal.aborted) setError(cause instanceof Error ? cause.message : String(cause))
     })
     return () => { abort.abort() }
-  }, [api, id, revision])
+  }, [api, displayMode, id, revision])
 
   const onMessage = useCallback((event: MessageEvent<unknown>) => {
     if (event.source !== iframe.current?.contentWindow) return
-    const message = event.data as Partial<BridgeRequest> | Partial<BridgeLayout> | null
+    const message = event.data as Partial<BridgeRequest> | Partial<BridgeLayout> | Partial<BridgeOpen> | null
+    if (message?.dshWidget === 1 && message.kind === 'open') {
+      onExpand?.()
+      return
+    }
     if (
       message?.dshWidget === 1
       && message.kind === 'layout'
       && typeof message.overflow === 'boolean'
     ) {
       setLayoutError(message.overflow
-        ? `${t('overflowDetail')} (${size})`
+        ? `${t('overflowDetail')} (${displayMode === 'expanded' ? t('expanded') : size})`
         : undefined)
       return
     }
@@ -134,7 +147,7 @@ export function WidgetFrame({
     }).catch((cause: unknown) => {
       reply({ ok: false, error: cause instanceof Error ? cause.message : String(cause) })
     })
-  }, [api, id, size, t])
+  }, [api, displayMode, id, onExpand, size, t])
 
   useEffect(() => {
     window.addEventListener('message', onMessage)
@@ -155,8 +168,9 @@ export function WidgetFrame({
 
   return (
     <article
-      className={`${css.card}${variant === 'details' ? ` ${css.detailsCard}` : ''}`}
+      className={`${css.card}${variant === 'details' ? ` ${css.detailsCard}` : ''}${displayMode === 'expanded' ? ` ${css.expandedCard}` : ''}`}
       data-size={size}
+      data-display-mode={displayMode}
     >
       <header className={css.cardHeader}>
         <div className={css.cardIdentity}>
@@ -164,9 +178,16 @@ export function WidgetFrame({
           <span className={css.badge}>{badge}</span>
         </div>
         <div className={css.actions}>
-          {widget.manifest.sizes.length > 1 && onCycleSize !== undefined
-            ? <button type="button" title={t('size')} onClick={onCycleSize}>{size}</button>
-            : <span className={css.size}>{size}</span>}
+          {displayMode === 'expanded'
+            ? <span className={css.size}>{t('expanded')}</span>
+            : widget.manifest.sizes.length > 1 && onCycleSize !== undefined
+              ? <button type="button" title={t('size')} onClick={onCycleSize}>{size}</button>
+              : <span className={css.size}>{size}</span>}
+          {displayMode === 'compact' && onExpand !== undefined && (
+            <button type="button" title={t('openExpanded')} aria-label={t('openExpanded')} onClick={onExpand}>
+              <IconFullscreenOutline16 />
+            </button>
+          )}
           {variant === 'card' && onEdit !== undefined && (
             <button type="button" className={css.editButton} title={t('edit')} onClick={onEdit}>
               <IconSparkle16 />
@@ -201,6 +222,11 @@ export function WidgetFrame({
           />
           {variant === 'details' && onClose !== undefined && (
             <button type="button" title={t('closePreview')} aria-label={t('closePreview')} onClick={onClose}>
+              <IconCloseOutline16 />
+            </button>
+          )}
+          {displayMode === 'expanded' && onClose !== undefined && (
+            <button type="button" title={t('closeExpanded')} aria-label={t('closeExpanded')} onClick={onClose}>
               <IconCloseOutline16 />
             </button>
           )}

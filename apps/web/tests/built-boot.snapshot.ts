@@ -65,6 +65,12 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
   expect(within(editableCalculatorCard).getByRole('button', { name: 'medium' })).toBeTruthy()
   fireEvent.keyDown(moveCalculator, { key: 'ArrowRight' })
   fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Open expanded view' }))
+  const expandedWidget = screen.getByRole('dialog', { name: 'Calculator' })
+  const expandedFrame = await within(expandedWidget).findByTitle('Calculator')
+  expect(expandedFrame.getAttribute('srcdoc')).toContain("displayMode:'expanded'")
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(screen.queryByRole('dialog', { name: 'Calculator' })).toBeNull()
 
   // New Widget is the Agent-first path: create a managed starter, adopt it as
   // an ordinary Workspace, and open its blank Session with a live preview.

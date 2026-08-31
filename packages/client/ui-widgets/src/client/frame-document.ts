@@ -1,6 +1,11 @@
-const BRIDGE = `<script>
-(()=>{let n=0,frame=0;const pending=new Map();function request(method,payload={}){return new Promise((resolve,reject)=>{const requestId=String(++n);pending.set(requestId,{resolve,reject});parent.postMessage({dshWidget:1,kind:'request',requestId,method,...payload},'*')})}window.dshWidget={fetch:url=>request('fetch',{url}),state:{get:()=>request('state.read'),set:state=>request('state.write',{state})}};addEventListener('message',event=>{const m=event.data;if(!m||m.dshWidget!==1||m.kind!=='response')return;const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);m.ok?p.resolve(m.value):p.reject(new Error(m.error))});function measure(){const root=document.documentElement,body=document.body;if(!body)return;const width=Math.max(root.scrollWidth,body.scrollWidth),height=Math.max(root.scrollHeight,body.scrollHeight);parent.postMessage({dshWidget:1,kind:'layout',overflow:width>root.clientWidth+1||height>root.clientHeight+1,width,height,viewportWidth:root.clientWidth,viewportHeight:root.clientHeight},'*')}function schedule(){cancelAnimationFrame(frame);frame=requestAnimationFrame(measure)}addEventListener('load',()=>{measure();if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(document.documentElement);new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true})})})();
+/** Host-selected Widget presentation independent from its canvas size. */
+export type WidgetDisplayMode = 'compact' | 'expanded'
+
+function bridge(displayMode: WidgetDisplayMode): string {
+  return `<script>
+(()=>{let n=0,frame=0;const pending=new Map();function request(method,payload={}){return new Promise((resolve,reject)=>{const requestId=String(++n);pending.set(requestId,{resolve,reject});parent.postMessage({dshWidget:1,kind:'request',requestId,method,...payload},'*')})}window.dshWidget={displayMode:'${displayMode}',fetch:url=>request('fetch',{url}),state:{get:()=>request('state.read'),set:state=>request('state.write',{state})}};addEventListener('dblclick',event=>{if(!event.defaultPrevented)parent.postMessage({dshWidget:1,kind:'open'},'*')});addEventListener('message',event=>{const m=event.data;if(!m||m.dshWidget!==1||m.kind!=='response')return;const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);m.ok?p.resolve(m.value):p.reject(new Error(m.error))});function measure(){const root=document.documentElement,body=document.body;if(!body)return;const width=Math.max(root.scrollWidth,body.scrollWidth),height=Math.max(root.scrollHeight,body.scrollHeight);parent.postMessage({dshWidget:1,kind:'layout',overflow:width>root.clientWidth+1||height>root.clientHeight+1,width,height,viewportWidth:root.clientWidth,viewportHeight:root.clientHeight},'*')}function schedule(){cancelAnimationFrame(frame);frame=requestAnimationFrame(measure)}addEventListener('load',()=>{measure();if(typeof ResizeObserver!=='undefined')new ResizeObserver(schedule).observe(document.documentElement);new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,attributes:true,characterData:true})})})();
 </script>`
+}
 
 const CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: blob:; font-src data:; connect-src \'none\';">'
 const CANVAS_RESET = '<style data-dsh-widget-canvas>html,body{box-sizing:border-box;width:100%;height:100%;min-width:0;min-height:0;margin:0;overflow:hidden}body{position:relative}</style>'
@@ -8,10 +13,14 @@ const CANVAS_RESET = '<style data-dsh-widget-canvas>html,body{box-sizing:border-
 /**
  * Inject the fixed-canvas reset, security policy, and Host bridge.
  * @param html - validated self-contained Widget entry document.
+ * @param displayMode - Host-selected compact canvas or expanded presentation.
  * @returns document rendered inside the sandboxed fixed-ratio frame.
  */
-export function instrumentWidgetHtml(html: string): string {
-  const injection = `${CSP}${CANVAS_RESET}${BRIDGE}`
+export function instrumentWidgetHtml(
+  html: string,
+  displayMode: WidgetDisplayMode = 'compact',
+): string {
+  const injection = `${CSP}${CANVAS_RESET}${bridge(displayMode)}`
   return /<head(?:\s[^>]*)?>/i.test(html)
     ? html.replace(/<head(?:\s[^>]*)?>/i, match => `${match}${injection}`)
     : `${injection}${html}`
