@@ -812,6 +812,7 @@ describe('deepsy desktop release workflow', () => {
     expect(JSON.stringify(decision)).toContain('inputs.release-current')
     expect(JSON.stringify(decision)).toContain('scripts/deepsy-update/sync-upstream.ts')
     expect(build?.if).toBe('steps.decision.outputs.updateAvailable == \'true\' && inputs.dry-run != true')
+    expect(build?.run).toContain('pnpm --filter @deepseek-ai/dsh-desktop run smoke')
     expect(push?.if).toContain('steps.decision.outputs.sourceChanged == \'true\'')
     expect(steps.indexOf(push!)).toBeGreaterThan(steps.indexOf(build!))
     const publish = steps.find(step => step.name === 'Publish desktop release')

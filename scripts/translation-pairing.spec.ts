@@ -313,6 +313,7 @@ describe('translation scope discovery', () => {
     'SAFETY.zh.md',
     'SAFETY.i18n.yaml',
     'apps/cli/README.md',
+    'apps/desktop/README.md',
     'future/subtree/readme.md',
     'packages/example/README.zh.md',
     'native/example/README.i18n.yaml',
@@ -334,6 +335,9 @@ describe('translation scope discovery', () => {
     'packages/example/node_modules/dependency/README.md',
     'packages/example/lib/README.md',
     'coverage/report/README.md',
+    'apps/desktop/dist/app/README.md',
+    'apps/desktop/dist/app/README.zh.md',
+    'apps/desktop/dist/app/README.i18n.yaml',
     'python/sdk-runtime/src/deepseek_harness_runtime/runtime/deepseek-harness-sdk-runtime-macos-arm64/README.md',
     'python/sdk-runtime/src/deepseek_harness_runtime/runtime/node/README.md',
   ])('excludes non-source or non-README path %s', (file) => {

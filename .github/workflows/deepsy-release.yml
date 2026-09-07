@@ -79,6 +79,7 @@ jobs:
           pnpm run build:desktop
           pnpm exec vitest run --config vitest.web.config.ts apps/web/tests/built-boot.expected.e2e.ts apps/web/tests/shipped-composition.e2e.ts
           pnpm --filter @deepseek-ai/dsh-desktop run package
+          pnpm --filter @deepseek-ai/dsh-desktop run smoke
 
       - name: Commit and push validated source
         if: steps.decision.outputs.sourceChanged == 'true' && inputs.dry-run != true

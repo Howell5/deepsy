@@ -20,9 +20,11 @@ This builds the host libraries, browser bundles, and desktop entry before openin
 pnpm run package:desktop
 ```
 
-The staging step uses `pnpm deploy` to materialize the desktop app and its complete production dependency closure before Electron Builder creates the platform artifact. App resources remain unpacked because Electron Utility Process entry points must be physical files.
+The staging step verifies required workspace peers and preset plugins, then uses `pnpm deploy` to materialize the production dependencies before Electron Builder creates the platform artifact. App resources remain unpacked because Electron Utility Process entry points must be physical files. After macOS packaging, `pnpm --filter @deepseek-ai/dsh-desktop run smoke` boots the packaged backend in an isolated Electron Utility Process and checks authenticated HTTP readiness without opening a user window or accessing existing user data.
 
 ## Current boundary
+
+Staging force-rebuilds native dependencies for the declared Electron version inside the isolated deployment. Repeated packaging cannot reuse a system-Node binary solely because an older Electron ABI cache marker remains beside it.
 
 The first desktop carrier reuses the proven HTTP/WebSocket Web profile on a random loopback port. The process is isolated and the port is never exposed outside loopback, but another local process can still probe it. Replacing this carrier with the already-planned IPC transport is the production-hardening follow-up; it does not require a product UI rewrite.
 

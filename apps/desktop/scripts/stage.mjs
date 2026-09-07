@@ -1,7 +1,8 @@
-import { lstat, mkdir, readdir, rm, symlink } from 'node:fs/promises'
+import { lstat, mkdir, readdir, readFile, rm, symlink } from 'node:fs/promises'
 import { dirname, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { rebuild } from '@electron/rebuild'
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repositoryRoot = resolve(packageDir, '../..')
@@ -65,3 +66,13 @@ const restore = spawnSync('pnpm', ['install', '--offline'], {
 })
 if (restore.error !== undefined) throw restore.error
 if (restore.status !== 0) process.exit(restore.status ?? 1)
+
+// A system-Node rebuild can leave Electron's ABI cache marker beside an
+// incompatible binary. Rebuild the isolated deployment, not the checkout.
+const manifest = JSON.parse(await readFile(resolve(packageDir, 'package.json'), 'utf8'))
+await rebuild({
+  buildPath: appDir,
+  projectRootPath: appDir,
+  electronVersion: manifest.devDependencies.electron,
+  force: true,
+})
