@@ -1,9 +1,10 @@
+import type { WidgetApi } from './api.ts'
 import {
   useCallback, useEffect, useMemo, useRef, useState,
   type CSSProperties, type DragEvent, type KeyboardEvent,
 } from 'react'
 import type {
-  IApiClient, WidgetLayoutItem, WidgetView,
+  WidgetId, WidgetLayoutItem, WidgetView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
 import {
@@ -17,7 +18,7 @@ import {
 import css from './WidgetsWorkspace.module.css'
 
 interface WidgetsInjected {
-  api: IApiClient
+  api: WidgetApi
   layout: ILayout
   subscribeChanges: WidgetChangeSubscriber
   editWidget: (widget: WidgetView) => Promise<void>
@@ -46,24 +47,24 @@ export function WidgetsWorkspace({
   const [columns, setColumns] = useState(6)
   const [cellSize, setCellSize] = useState(180)
   const [editingLayout, setEditingLayout] = useState(false)
-  const [dragging, setDragging] = useState<string>()
+  const [dragging, setDragging] = useState<WidgetId>()
   const [error, setError] = useState<string>()
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
-  const [expandedId, setExpandedId] = useState<string>()
+  const [expandedId, setExpandedId] = useState<WidgetId>()
 
   const reload = useCallback(async () => {
     setLoading(true)
     setError(undefined)
     try {
       const [listed, stored] = await Promise.all([
-        api.widgets.list({}),
-        api.widgets.layoutRead({}),
+        api.widgets.list(),
+        api.widgets.layoutRead(),
       ])
-      if (!listed.result.ok) throw new Error(listed.result.error.message)
-      if (!stored.result.ok) throw new Error(stored.result.error.message)
-      setWidgets(listed.result.value.widgets)
-      setLayout(stored.result.value.layout)
+      if (!listed.ok) throw new Error(listed.error.message)
+      if (!stored.ok) throw new Error(stored.error.message)
+      setWidgets(listed.value.widgets)
+      setLayout(stored.value.layout)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
@@ -94,15 +95,15 @@ export function WidgetsWorkspace({
 
   const importProject = useCallback(async () => {
     setError(undefined)
-    const picked = await api.host.pickDirectory({})
-    if (!picked.result.ok) {
-      setError(picked.result.error.message)
+    const picked = await api.directoryPicker.pick()
+    if (!picked.ok) {
+      setError(picked.error.message)
       return
     }
-    if (picked.result.value.path === null) return
-    const installed = await api.widgets.install({ path: picked.result.value.path })
-    if (!installed.result.ok) {
-      setError(installed.result.error.message)
+    if (picked.value === null) return
+    const installed = await api.widgets.importProject(picked.value)
+    if (!installed.ok) {
+      setError(installed.error.message)
       return
     }
     await reload()
@@ -112,10 +113,10 @@ export function WidgetsWorkspace({
     setCreating(true)
     setError(undefined)
     try {
-      const created = await api.widgets.create({})
-      if (!created.result.ok) throw new Error(created.result.error.message)
+      const created = await api.widgets.create()
+      if (!created.ok) throw new Error(created.error.message)
       await reload()
-      await editWidget(created.result.value.widget)
+      await editWidget(created.value.widget)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
@@ -141,10 +142,10 @@ export function WidgetsWorkspace({
     const previous = layout
     setLayout(next)
     setError(undefined)
-    const saved = await api.widgets.layoutWrite({ layout: next })
-    if (!saved.result.ok) {
+    const saved = await api.widgets.layoutWrite(next)
+    if (!saved.ok) {
       setLayout(previous)
-      setError(saved.result.error.message)
+      setError(saved.error.message)
     }
   }, [api, layout])
 
@@ -161,7 +162,7 @@ export function WidgetsWorkspace({
     ))
   }, [columns, displayedLayout, persistLayout])
 
-  const startDrag = useCallback((event: DragEvent<HTMLDivElement>, id: string) => {
+  const startDrag = useCallback((event: DragEvent<HTMLDivElement>, id: WidgetId) => {
     const button = (event.target as HTMLElement).closest('button')
     if (!editingLayout || (button !== null && button.dataset.widgetDragSurface !== 'true')) {
       event.preventDefault()
@@ -340,7 +341,6 @@ export function WidgetsWorkspace({
         open={expandedWidget !== undefined}
         onClose={() => { setExpandedId(undefined) }}
         title={expandedWidget?.manifest.name ?? t('expanded')}
-        closeLabel={t('closeExpanded')}
         className={css.expandedDialog ?? ''}
         headless
       >

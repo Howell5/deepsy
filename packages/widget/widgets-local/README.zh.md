@@ -1,8 +1,26 @@
+---
+description: "受管理的静态 Widget 项目、文件存储与网络权限。"
+kind: "package-reference"
+---
 # @deepseek-ai/dsh-widgets-local
 
 [English](README.md) | 中文
 
+## 概述
+
 [`@deepseek-ai/dsh-widgets`](../widgets/README.zh.md) 的本地 Service Provider。默认把受管理项目存放在 `$DSH_HOME/widgets/projects`，每次读取时重新校验 manifest 和入口，并在未关闭 `seedExamples` 时写入离线计算器与联网的黄金／美元走势 Widget。
+
+## 目录
+
+- [使用与行为](#use-and-behavior)
+- [模型体验](#model-experience)
+- [已知限制与暂缓事项](#known-limitations-and-deferred-work)
+- [开发备注](#dev-note)
+
+-----
+
+<a id="use-and-behavior"></a>
+## 使用与行为
 
 `root` 可以覆盖受管理项目目录。`seedExamples` 默认为 `true`；写入示例绝不会替换具有相同 id 的现有目录。`watch` 默认为 `true`，`watchDebounceMs` 默认为 120 毫秒。监听器忽略初始发现，对后续文件系统变更所属的直接受管理项目发送 `widgets/changed`，并随提供方 fiber 一同关闭。内置示例不能通过 Widget 生命周期 API 移除。
 
@@ -18,6 +36,7 @@ Widget 网络请求是无凭证的 HTTPS GET。每个目标和重定向都必须
 
 起始项目的 `AGENTS.md` 会把视觉设计纳入普通 Workspace Agent 的每次创建和重设计，包括增量修改。它要求 Agent 推导受众、使用时刻、主要信号和情绪基调，确定一套符合领域的视觉系统，实现相关数据状态和无障碍行为，并按照明确的反模板规则自行复查结果。它要求交互式 Widget 使用 `window.dshWidget.state.get()` 和 `state.set(nextState)`，包括为每日流程使用按日期分键的状态，而不是浏览器存储。它还把 manifest 中的紧凑画布尺寸与 `window.dshWidget.displayMode` 分开，使同一个入口能在完整模式中展示更多细节，而不改变状态或权限。现有 Workspace 指令加载机制会把该文件提供给模型请求，无需让用户配置风格；浏览器容器会独立强制所选呈现模式。
 
+<a id="model-experience"></a>
 ## 模型体验
 
 间接产生影响，途径是 Workspace 指令加载器使用起始项目的 `AGENTS.md`：创建的项目成为 Workspace 后，加载器会把该文件记录为模型可见上下文，并同时用于首次创建和后续编辑；这组指令不增加工具或 schema。
@@ -28,6 +47,18 @@ Widget 网络请求是无凭证的 HTTPS GET。每个目标和重定向都必须
 
 ## 已知限制与暂缓事项
 
+<a id="known-limitations-and-deferred-work"></a>
+
 - **静态资源必须是单文件** —— 安装只复制 `widget.json` 和声明的 HTML 入口，因此脚本、样式、字体和图片必须嵌入该文档。
 - **更新需要新 id 或手动移除** —— 安装现有 id 会失败，内置示例则有意保持不可变。
 - **刷新声明仅为元数据** —— 本提供方不调度可见区间刷新，也不保留上一次成功的网络响应。
+
+<a id="dev-note"></a>
+### 开发备注
+
+<details>
+<summary>维护上下文</summary>
+
+不发布不变式伴生入口。每次操作都验证文件系统输入；Provider 不保留可与这些文件比较的权威内存副本。
+
+</details>

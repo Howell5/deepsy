@@ -12,7 +12,7 @@ const release: DeepsyRelease = {
 describe('UpdateStatus', () => {
   it('renders nothing while checking', () => {
     const { container } = render(
-      <UpdateStatus currentVersion="0.1.0-rc.5" fetchReleases={() => new Promise(() => {})} />,
+      <UpdateStatus t={() => 'Version {version} available'} currentVersion="0.1.0-rc.5" fetchReleases={() => new Promise(() => {})} />,
     )
     expect(container.firstChild).toBeNull()
   })
@@ -20,7 +20,7 @@ describe('UpdateStatus', () => {
   it('renders nothing when up to date', async () => {
     const fetchReleases = vi.fn(async () => [release])
     const { container } = render(
-      <UpdateStatus currentVersion="0.1.0-rc.6" fetchReleases={fetchReleases} />,
+      <UpdateStatus t={() => 'Version {version} available'} currentVersion="0.1.0-rc.6" fetchReleases={fetchReleases} />,
     )
     await vi.waitFor(() => { expect(fetchReleases).toHaveBeenCalled() })
     expect(container.firstChild).toBeNull()
@@ -28,7 +28,7 @@ describe('UpdateStatus', () => {
 
   it('renders an update link with the new version when available', async () => {
     render(
-      <UpdateStatus
+      <UpdateStatus t={() => 'Version {version} available'}
         currentVersion="0.1.0-rc.5"
         fetchReleases={async () => [release]}
       />,
@@ -42,7 +42,7 @@ describe('UpdateStatus', () => {
   it('stays silent when the fetch fails', async () => {
     const fetchReleases = vi.fn(async () => { throw new Error('network down') })
     const { container } = render(
-      <UpdateStatus currentVersion="0.1.0-rc.5" fetchReleases={fetchReleases} />,
+      <UpdateStatus t={() => 'Version {version} available'} currentVersion="0.1.0-rc.5" fetchReleases={fetchReleases} />,
     )
     await vi.waitFor(() => { expect(fetchReleases).toHaveBeenCalled() })
     expect(container.firstChild).toBeNull()

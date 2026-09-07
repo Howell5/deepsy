@@ -39,8 +39,7 @@ describe('editWidgetWithAgent', () => {
       list: { getSnapshot: () => ({ items: [existing] }), subscribe: () => () => {} } as never,
       create,
       rename,
-      connectWorkspace,
-    }, { open }, { selectApplication, openApplicationDetails }, widget)
+    }, { open }, { selectApplication, openApplicationDetails }, widget, { connectWorkspace })
 
     expect(create).not.toHaveBeenCalled()
     expect(rename).not.toHaveBeenCalled()
@@ -61,11 +60,10 @@ describe('editWidgetWithAgent', () => {
       list: { getSnapshot: () => ({ items: [workspace('/somewhere-else')] }), subscribe: () => () => {} } as never,
       create,
       rename,
-      connectWorkspace,
     }, { open: vi.fn() }, {
       selectApplication: vi.fn(),
       openApplicationDetails: vi.fn(),
-    }, widget)
+    }, widget, { connectWorkspace })
 
     expect(create).toHaveBeenCalledWith({ path: widget.sourcePath })
     expect(rename).toHaveBeenCalledWith('workspace-1', 'Gold / USD')
@@ -74,7 +72,7 @@ describe('editWidgetWithAgent', () => {
 
   it('synchronizes an adopted Workspace after the Agent names its Widget', async () => {
     const rename = vi.fn()
-    const list = vi.fn(async () => ({ result: { ok: true, value: { widgets: [widget] } } }))
+    const list = vi.fn(async () => ({ ok: true, value: { widgets: [widget] } }))
 
     await syncWidgetWorkspaceNames(
       { widgets: { list } } as never,

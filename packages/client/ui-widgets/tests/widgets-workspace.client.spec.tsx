@@ -2,13 +2,14 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
+import { WidgetId } from '@deepseek-ai/dsh-widgets'
 import type {} from '../src/client/index.ts'
 import { WidgetsWorkspace } from '../src/client/WidgetsWorkspace.tsx'
 
 const widget: WidgetView = {
   manifest: {
     schemaVersion: 2,
-    id: 'calculator',
+    id: WidgetId('calculator'),
     name: 'Calculator',
     version: '1',
     runtime: 'static',
@@ -29,13 +30,17 @@ function workspace(api: object, active = 'widgets') {
     layout={{} as never}
     useSessions={() => { throw new Error('not used') }}
     useWorkspaces={() => { throw new Error('not used') }}
+    useSessionPendingInteraction={() => { throw new Error('not used') }}
     subscribeChanges={() => () => {}}
     editWidget={async () => {}}
     t={(key: string) => key}
   />
 }
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 describe('Widgets workspace canvas', () => {
   it('enters edit mode and persists a keyboard-snapped move', async () => {
@@ -44,14 +49,14 @@ describe('Widgets workspace canvas', () => {
       disconnect() {}
     })
     const layoutWrite = vi.fn(async () => ({
-      result: { ok: true as const, value: { saved: true as const } },
+      ok: true as const, value: undefined,
     }))
     const api = {
       widgets: {
-        list: async () => ({ result: { ok: true as const, value: { widgets: [widget] } } }),
-        layoutRead: async () => ({ result: { ok: true as const, value: { layout: [] } } }),
+        list: async () => ({ ok: true as const, value: { widgets: [widget] } }),
+        layoutRead: async () => ({ ok: true as const, value: { layout: [] } }),
         layoutWrite,
-        read: async () => ({ result: { ok: true as const, value: { widget, html: '<main>Calculator</main>' } } }),
+        read: async () => ({ ok: true as const, value: { widget, html: '<main>Calculator</main>' } }),
       },
     }
 
@@ -61,9 +66,9 @@ describe('Widgets workspace canvas', () => {
     fireEvent.keyDown(screen.getByRole('button', { name: 'moveWidget: Calculator' }), { key: 'ArrowRight' })
 
     await waitFor(() => {
-      expect(layoutWrite).toHaveBeenCalledWith({
-        layout: [{ id: 'calculator', size: 'small', column: 1, row: 0 }],
-      })
+      expect(layoutWrite).toHaveBeenCalledWith([
+        { id: 'calculator', size: 'small', column: 1, row: 0 },
+      ])
     })
   })
 
@@ -73,12 +78,12 @@ describe('Widgets workspace canvas', () => {
       disconnect() {}
     })
     const read = vi.fn(async () => ({
-      result: { ok: true as const, value: { widget, html: '<main>Calculator</main>' } },
+      ok: true as const, value: { widget, html: '<main>Calculator</main>' },
     }))
     const api = {
       widgets: {
-        list: async () => ({ result: { ok: true as const, value: { widgets: [widget] } } }),
-        layoutRead: async () => ({ result: { ok: true as const, value: { layout: [] } } }),
+        list: async () => ({ ok: true as const, value: { widgets: [widget] } }),
+        layoutRead: async () => ({ ok: true as const, value: { layout: [] } }),
         read,
       },
     }

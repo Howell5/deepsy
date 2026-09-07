@@ -23,9 +23,9 @@ import {
   type MenuItemConstructorOptions,
   type UtilityProcess,
 } from 'electron'
+import { backendReadyUrl } from './backend-url.ts'
 
 const APP_NAME = 'deepsy'
-const BACKEND_READY = /dsh web: (http:\/\/127\.0\.0\.1:\d+)/
 const STARTUP_TIMEOUT_MS = 120_000
 const SHUTDOWN_TIMEOUT_MS = 8_000
 const LOG_TAIL_LINES = 80
@@ -192,11 +192,11 @@ function pipeBackendOutput(child: UtilityProcess, generation: number): Promise<s
       appendLog('stdout', chunk)
       if (settled || generation !== backendGeneration) return
       stdoutBuffer = (stdoutBuffer + chunk.toString()).slice(-4096)
-      const match = BACKEND_READY.exec(stdoutBuffer)
-      if (match?.[1] === undefined) return
+      const url = backendReadyUrl(stdoutBuffer)
+      if (url === undefined) return
       settled = true
       cleanup()
-      resolve(match[1])
+      resolve(url)
     })
     child.stderr?.on('data', (chunk: Buffer) => { appendLog('stderr', chunk) })
     child.once('exit', (code) => {
@@ -220,7 +220,7 @@ async function startBackend(): Promise<void> {
   backendUrl = undefined
   showStartupPage()
 
-  const child = utilityProcess.fork(resolveCliBin(), ['web', '--port', '0'], {
+  const child = utilityProcess.fork(resolveCliBin(), ['web', '--port', '0', '--no-open'], {
     cwd: process.env.DSH_CWD?.trim() || homedir(),
     execArgv: ['--expose-internals'],
     env: {

@@ -1,8 +1,26 @@
+---
+description: "Install, arrange, and expand local Widgets in the desktop canvas."
+kind: "package-reference"
+---
 # @deepseek-ai/dsh-client-ui-widgets
 
 English | [中文](README.zh.md)
 
+## Summary
+
 Browser-side Widgets application for the desktop composition. It contributes a first-class row to `sidebar.application`, a root-scoped surface to `application`, and a session-scoped live preview to `details.application`; selecting the row preserves the current Session while replacing the conversation center with the Widget grid.
+
+## Table of Contents
+
+- [Use and behavior](#use-and-behavior)
+- [Model Experience](#model-experience)
+- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- [Dev Note](#dev-note)
+
+-----
+
+<a id="use-and-behavior"></a>
+## Use and behavior
 
 The workspace lists installed projects through the Host Widgets RPC domain and imports a local project through the native directory picker. Its full-width logical canvas supports semantic `small`, `medium`, and `large` cards occupying `1×1`, `2×1`, and `2×2` cells. Edit mode makes the whole card draggable, snaps drops to free cells, exposes arrow-key movement, and persists explicit positions through the Host; narrow windows temporarily reflow without overwriting the saved desktop layout. Outside edit mode, a double-click or the visible expanded-view control opens the same Widget in a large modal, and Escape, the close control, or the mask returns to the canvas. **New Widget** creates a managed starter and immediately opens it as an ordinary Agent Workspace with its blank Session and live preview. **Talk to this Widget** performs the same handoff for an existing card. An exact managed-path match adds the same preview toggle to the blank Hero and active Session header; its Workspace-level browser preference restores the right column when the user later enters through the ordinary Workspace browser, while an explicit close keeps it closed. Neither action sends a prompt or starts a paid model request; the user describes the requested tool or change in the ordinary composer. Host file-change events reload the matching frame and synchronize an adopted Workspace's display title with the current manifest name after an agent or external editor writes the project.
 
@@ -10,6 +28,7 @@ Each card gives its iframe the complete selected semantic canvas and never stret
 
 The package includes no runtime Node.js dependency and starts no per-Widget localhost server. The bundled calculator runs offline. The Gold / USD example loads daily history through the Host bridge and displays an error with retry when the provider is unavailable.
 
+<a id="model-experience"></a>
 ## Model Experience
 
 None, as this package is a browser-side application container and registers no prompt, message, schema, stream, or tool result.
@@ -20,6 +39,18 @@ None; the UI and its Host bridge never assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 
+<a id="known-limitations-and-deferred-work"></a>
+
 - **One installed project is one canvas instance** — layout has no separate instance id, so duplicate cards, disable, remove UI, and settings are deferred.
 - **Refresh policy is manual at the container level** — a Widget may load data when its frame opens, but `visible-interval` scheduling and stale-state persistence are not implemented.
 - **The bridge exposes GET-style fetch and bounded JSON state** — credentials, theme, locale, notifications, arbitrary files, and background execution are unavailable.
+
+<a id="dev-note"></a>
+### Dev Note
+
+<details>
+<summary>Maintainer context</summary>
+
+No invariant companion is published. Host operations own durable Widget state; the browser reads their results and contributes effect-owned slots.
+
+</details>

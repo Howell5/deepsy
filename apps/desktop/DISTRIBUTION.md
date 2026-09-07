@@ -50,8 +50,9 @@
 
 ## 更新管线（配套）
 
-- 上游检测：npm `@deepseek-ai/dsh` `latest` dist-tag（`pnpm run update:check`）
-- 自动打包：`.github/workflows/deepsy-release.yml`（每 6h 检查上游；手动 dispatch 可发布工作区当前版本）
+- 上游检测：[发布工作流](../../.github/workflows/deepsy-release.yml) 每六小时检查 `upstream/master` 的 Git 祖先关系，无新提交时不发布；`pnpm run update:check` 仅查询 npm 版本。
+- 自动发布：工作流先合并上游源码，只自动解决独立的版本字段冲突；依赖安装、测试、文档检查及打包通过后才推送普通合并提交并上传 DMG/ZIP。任一步失败均不发布新包。
+- 手动发布：`workflow_dispatch` 的 `release-current` 发布当前 `master` 版本；`dry-run` 只报告更新。已公开的 Release 不覆盖，上传完成前保持草稿。
 - 用户端提示：设置面板右下角（`settings.footer` 槽位，`@deepseek-ai/dsh-client-ui-update`）
 
 ## Homebrew Cask（规划）

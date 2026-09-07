@@ -38,7 +38,7 @@ Widgets 应用把完整中间区域作为逻辑画布。用户进入明确的编
 |---|---|
 | `packages/widget/widgets` | Service Definition、严格 manifest／状态／布局解析器、品牌化 id、操作和稳定错误 |
 | `packages/widget/widgets-local` | 受管理项目与宿主拥有的数据存储、内置示例、路径校验、文件变更通知和外部请求策略 |
-| `packages/host/apiproxy` | 带类型的 Widget 生命周期、状态、布局和 fetch RPC 方法及载体 schema |
+| `packages/widget/widgets-local/src/controller.ts` | 生成的 `widgets` Remote 命名空间，负责生命周期、状态、布局、fetch 和原生文件夹显示 |
 | `packages/client/ui-widgets` | 侧边栏入口、吸附画布、Agent 编辑交接、实时预览、隔离 frame 和 frame 到宿主的桥接 |
 | `packages/client/ui-layout`、`packages/client/ui-sidebar` 和 `packages/client/ui-conversation` | 通用根应用／详情应用选择，以及会话页头和空白 Hero 工具 slot |
 
@@ -46,7 +46,7 @@ Service Definition 不包含 UI 或传输假设。UI 只通过宿主方法读取
 
 ## 验证
 
-提供方测试覆盖起始项目创建、完整模式创作规则、示例写入、静态项目导入、重复拒绝、项目文件之外的状态与布局持久化、未声明网络访问拒绝、监听器失效通知和监听器释放。客户端测试覆盖逻辑位置、碰撞规避、语义尺寸调整、键盘移动持久化、呈现模式注入、打开完整模式及 Escape 关闭，以及 Agent 编辑所需的 Workspace 复用、接入、manifest 名称同步和预览偏好持久化。构建后的 Web 路径会打开并关闭完整模式，创建起始项目，进入其空白会话并打开预览，再为已有 Widget 覆盖相同交接和预览恢复。API 载体测试通过真实 fetch handler 验证 Widget 请求与响应序列化。客户端和宿主聚合 TypeScript 程序包含所有包，发行版 Web／桌面组合会同时挂载提供方和 UI。
+提供方测试覆盖起始项目创建、完整模式创作规则、示例写入、静态项目导入、重复拒绝、项目文件之外的状态与布局持久化、未声明网络访问拒绝、监听器失效通知和监听器释放。客户端测试覆盖逻辑位置、碰撞规避、语义尺寸调整、键盘移动持久化、呈现模式注入、打开完整模式及 Escape 关闭，以及 Agent 编辑所需的 Workspace 复用、接入、manifest 名称同步和预览偏好持久化。构建后的 Web 路径会打开并关闭完整模式，创建起始项目，进入其空白会话并打开预览，再通过生成的 Remote 客户端为已有 Widget 覆盖相同交接和预览恢复。Controller 测试通过本地 Provider 验证持久状态、布局、权限检查和移除。客户端和宿主聚合 TypeScript 程序包含所有包，发行版 Web／桌面组合会同时挂载提供方和 UI。
 
 ## 考虑过的替代方案
 

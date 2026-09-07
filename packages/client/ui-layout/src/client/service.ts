@@ -39,15 +39,27 @@ export interface ILayout {
    * @param scopeKey - session identity the details surface belongs to.
    */
   openApplicationDetails(id: string, scopeKey: string): void
-  /** Current feature-owned details selection, absent for ordinary tool details. */
+  /** Read the feature-owned details selection.
+   * @returns the selection, or undefined for ordinary tool details.
+   */
   getDetailsApplication(): DetailsApplicationSelection | undefined
-  /** Subscribe to feature-owned details selection changes. */
+  /** Subscribe to feature-owned details selection changes.
+   * @param listener - callback after selection changes.
+   * @returns subscription disposer.
+   */
   subscribeDetailsApplication(listener: () => void): () => void
-  /** Current first-class center application. */
+  /** Read the current center application.
+   * @returns registered application id.
+   */
   getApplication(): string
-  /** Subscribe to center-application changes. */
+  /** Subscribe to center-application changes.
+   * @param listener - callback after selection changes.
+   * @returns subscription disposer.
+   */
   subscribeApplication(listener: () => void): () => void
-  /** Select a registered center application by stable id. */
+  /** Select a registered center application.
+   * @param id - stable application id.
+   */
   selectApplication(id: string): void
 }
 

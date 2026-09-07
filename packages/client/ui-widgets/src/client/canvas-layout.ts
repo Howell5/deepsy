@@ -1,4 +1,4 @@
-import type { WidgetLayoutItem, WidgetSize, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { WidgetId, WidgetLayoutItem, WidgetSize, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 
 /** Grid span occupied by one semantic Widget size. */
 export interface WidgetSpan {
@@ -93,7 +93,7 @@ export function arrangeWidgetLayout(
  */
 export function placeWidget(
   layout: WidgetLayoutItem[],
-  id: string,
+  id: WidgetId,
   size: WidgetSize,
   column: number,
   row: number,

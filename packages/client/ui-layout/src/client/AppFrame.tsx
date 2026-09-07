@@ -12,8 +12,11 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
-import type { PropsRenderSlots, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
+import type {
+  PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
+} from '@deepseek-ai/dsh-client-ui-slots'
 import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
+import { DocumentTitle } from './DocumentTitle.tsx'
 import type { createLayoutStore } from './stores.ts'
 import type { DetailsApplicationSelection } from './service.ts'
 import css from './AppFrame.module.css'
@@ -30,6 +33,7 @@ export type AppFrameProps =
     subscribeDetailsApplication: (listener: () => void) => () => void
     closeDetails: () => void
   }
+  & PropsLocale<'common'>
 
 /** Center column grid item (session-body building block). */
 function CenterColumn(props: { children?: ReactNode }) {
@@ -102,6 +106,8 @@ export function AppFrame({
   getDetailsApplication,
   subscribeDetailsApplication,
   closeDetails,
+  SessionProvider,
+  t,
 }: AppFrameProps) {
   const panels = useStore(s => s)
   const application = useSyncExternalStore(subscribeApplication, getApplication, getApplication)
@@ -113,6 +119,10 @@ export function AppFrame({
   const detailsSession = useSessions((s) => {
     const current = s.current
     return current !== undefined && s.byId[current] !== undefined ? current : undefined
+  })
+  const documentTitle = useSessions((s) => {
+    const current = s.current
+    return current === undefined ? undefined : s.byId[current]?.title
   })
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
@@ -183,6 +193,7 @@ export function AppFrame({
   const onDetailsDrag = useCallback((dx: number) => {
     actions.setDetails(detailsBase.current - dx)
   }, [actions])
+  const productTitle = process.env.DSH_CLIENT_TITLE ?? t('brand.localBuild')
 
   return (
     <div
@@ -193,6 +204,10 @@ export function AppFrame({
       data-details-collapsed={cols.details === 0 || undefined}
       data-dragging={dragging || undefined}
     >
+      <DocumentTitle
+        productTitle={productTitle}
+        {...documentTitle === undefined ? {} : { title: documentTitle }}
+      />
       <div className={css.sidebarCol}>
         {/* Render-site slot call with live concession output: a closed
             sidebar keeps the mounted slot at the compact-rail width, and the
@@ -208,8 +223,7 @@ export function AppFrame({
         {/* Both column occupants stay at fixed tree positions from first
             paint — no loading gate: a bare status line reads worse than
             the shell's own pending rendering. The conversation
-            is session-maybe; the strict details entry naturally renders
-            empty while no session is current. */}
+            is session-maybe; SessionProvider binds strict details to the selected Session. */}
         <CenterColumn>
           <div className={css.applicationLayer} hidden={application !== 'conversation'}>
             {renderSlot('conversation', {})}
@@ -219,9 +233,9 @@ export function AppFrame({
           </div>
         </CenterColumn>
         <DetailsColumn>
-          {detailsApplication !== undefined && detailsApplication.scopeKey === detailsSession
+          <SessionProvider>{detailsApplication !== undefined && detailsApplication.scopeKey === detailsSession
             ? renderSlot('details.application', { active: detailsApplication.id })
-            : renderSlot('details', {})}
+            : renderSlot('details', {})}</SessionProvider>
         </DetailsColumn>
       </>
       <div className={css.overlayLayer} data-shell-overlay>

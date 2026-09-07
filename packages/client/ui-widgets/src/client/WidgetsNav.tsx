@@ -1,12 +1,12 @@
+import type { WidgetApi } from './api.ts'
 import { useSyncExternalStore } from 'react'
-import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
 import { IconDataOutline16, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './WidgetsNav.module.css'
 
 interface WidgetsNavInjected {
-  api: IApiClient
+  api: WidgetApi
   layout: ILayout
 }
 

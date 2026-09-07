@@ -20,7 +20,7 @@ The protocol architecture reserved an Electron IPC carrier, but no IPC client, s
 
 **Package a materialized production closure.** `pnpm deploy --prod` stages the desktop package and every workspace runtime dependency before Electron Builder creates DMG/ZIP, NSIS, or AppImage artifacts. App resources remain unpacked: Utility Process requires a physical entrypoint, and the bootstrap forks the CLI entry directly. Platform signing is therefore part of the release boundary rather than ASAR being treated as an integrity mechanism.
 
-This decision partially supersedes the Electron-carrier portion of [GUI layering and the RPC protocol](2026-07-19-gui-layering-and-rpc-protocol.md): the IPC carrier remains the production-hardening target, but it is no longer a prerequisite for the first desktop executable. The bootstrap temporarily reuses `dsh-host-webserver` on an operating-system-assigned loopback port.
+The bootstrap reuses the [Web client architecture](../../../../docs/subsystems/web-client.md) on an operating-system-assigned loopback port. It passes `--no-open` and preserves the authentication query in the complete readiness URL so Electron, not an external browser, opens the authenticated client.
 
 ## Alternatives considered
 

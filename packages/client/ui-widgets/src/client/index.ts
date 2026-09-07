@@ -3,8 +3,11 @@
  * and conversation preview controls backed by the Host Widgets RPC domain.
  */
 
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
@@ -29,12 +32,12 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const NS = 'widgets'
 
 /** Required client services for navigation, Host calls, slots, and copy. */
-export const inject = ['connection', 'layout', 'slots', 'locale', 'remote', 'sessions', 'workspaces']
+export const inject = ['layout', 'slots', 'locale', 'remote', 'remote.widgets', 'remote.directoryPicker', 'sessions', 'workspaces', 'uiWorkspace']
 
 /** Register the Widgets application and sidebar entry. */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-widgets: dictionaries')
-  const api = (ctx.get('connection') as ConnectionHandle).api
+  const api = { widgets: ctx.remote.widgets, directoryPicker: ctx.remote.directoryPicker }
   const subscribeChanges: WidgetChangeSubscriber = listener =>
     ctx.remote.$on('widgets/changed', listener)
   const syncWorkspaceNames = (id?: string): void => {
@@ -53,7 +56,7 @@ export function apply(ctx: ClientContext): void {
     layout: ctx.layout,
     subscribeChanges,
     editWidget: async (widget: Parameters<typeof editWidgetWithAgent>[3]) => {
-      await editWidgetWithAgent(ctx.workspaces, ctx.sessions, ctx.layout, widget)
+      await editWidgetWithAgent(ctx.workspaces, ctx.sessions, ctx.layout, widget, ctx.uiWorkspace)
     },
   })
   ctx.slots.inject('sidebar.application', () =>

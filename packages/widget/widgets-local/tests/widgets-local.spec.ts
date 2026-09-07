@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { WidgetError, WidgetId } from '@deepseek-ai/dsh-widgets'
 import LocalWidgets from '../src/index.ts'
+import type { WidgetController } from '../src/controller.ts'
 
 const watcher = vi.hoisted(() => ({
   handlers: new Map<string, (...args: unknown[]) => void>(),
@@ -52,6 +53,31 @@ afterEach(async () => {
 })
 
 describe('LocalWidgets', () => {
+  it('exposes generated Remote operations over the same durable project data', async () => {
+    const { ctx, fiber, root } = await harness()
+    try {
+      await vi.waitFor(() => { expect(ctx.get('widgetController')).toBeDefined() })
+      const controller = ctx.get('widgetController') as WidgetController
+      const { widget } = await controller.create()
+      expect((await controller.list()).widgets.map(item => item.manifest.id)).toContain(widget.manifest.id)
+      await controller.stateWrite(widget.manifest.id, { pickup: true })
+      expect(await controller.stateRead(widget.manifest.id)).toEqual({ state: { pickup: true } })
+      expect(JSON.parse(await readFile(join(root, '.state', `${widget.manifest.id}.json`), 'utf8')))
+        .toEqual({ pickup: true })
+      const layout = [{ id: widget.manifest.id, size: 'small' as const, column: 2, row: 1 }]
+      await controller.layoutWrite(layout)
+      expect(await controller.layoutRead()).toEqual({ layout })
+      expect((await controller.read(widget.manifest.id)).widget.sourcePath).toBe(widget.sourcePath)
+      await expect(controller.read('../outside' as never)).rejects.toBeInstanceOf(WidgetError)
+      await expect(controller.fetch(widget.manifest.id, 'https://example.com', new AbortController().signal))
+        .rejects.toMatchObject({ code: 'permission-denied' })
+      await controller.removeProject(widget.manifest.id)
+      await expect(controller.read(widget.manifest.id)).rejects.toBeInstanceOf(WidgetError)
+    } finally {
+      await fiber.dispose()
+    }
+  })
+
   it('seeds readable calculator and gold projects without requiring a build server', async () => {
     const { ctx, fiber } = await harness()
     try {

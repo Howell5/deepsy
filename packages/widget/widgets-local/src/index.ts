@@ -25,6 +25,9 @@ import {
   type WidgetState, type WidgetView,
 } from '@deepseek-ai/dsh-widgets'
 import { BUILT_IN_WIDGETS } from './examples.ts'
+import { WidgetController } from './controller.ts'
+
+export { WidgetController } from './controller.ts'
 
 const MAX_MANIFEST_BYTES = 64 * 1024
 const MAX_HTML_BYTES = 512 * 1024
@@ -237,6 +240,7 @@ export default class LocalWidgets extends Widgets {
 
   constructor(ctx: Context, config: Config) {
     super(ctx)
+    ctx.plugin(WidgetController)
     this.root = resolve(config.root ?? join(resolveDshHome(), 'widgets', 'projects'))
     this.stateRoot = join(this.root, '.state')
     this.layoutPath = join(this.root, '.layout.json')

@@ -27,3 +27,5 @@ The staging step uses `pnpm deploy` to materialize the desktop app and its compl
 The first desktop carrier reuses the proven HTTP/WebSocket Web profile on a random loopback port. The process is isolated and the port is never exposed outside loopback, but another local process can still probe it. Replacing this carrier with the already-planned IPC transport is the production-hardening follow-up; it does not require a product UI rewrite.
 
 Electron blocks the Node internals flag in packaged applications, so live profile-patch watching is disabled on this surface. Restart deepsy after editing a profile patch.
+
+The shell preserves the authentication token in the backend readiness URL and disables the CLI's external-browser launch. [The release workflow](../../.github/workflows/deepsy-release.yml) checks upstream Git history every six hours; it merges source and validates the desktop before publishing a new package. Source conflicts or failed checks stop publication.

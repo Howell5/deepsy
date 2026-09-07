@@ -1,8 +1,26 @@
+---
+description: "在桌面画布中安装、排列并展开本地 Widget。"
+kind: "package-reference"
+---
 # @deepseek-ai/dsh-client-ui-widgets
 
 [English](README.md) | 中文
 
+## 概述
+
 桌面组合中的浏览器端 Widgets 应用。它向 `sidebar.application` 贡献一个一级入口，向 `application` 贡献一个根范围界面，并向 `details.application` 贡献一个会话范围的实时预览；选择该入口会保留当前会话，同时用 Widget 网格替换中间的对话区域。
+
+## 目录
+
+- [使用与行为](#use-and-behavior)
+- [模型体验](#model-experience)
+- [已知限制与暂缓事项](#known-limitations-and-deferred-work)
+- [开发备注](#dev-note)
+
+-----
+
+<a id="use-and-behavior"></a>
+## 使用与行为
 
 工作台通过宿主 Widgets RPC 域列出已安装项目，并通过原生目录选择器导入本地项目。它的全宽逻辑画布支持语义尺寸 `small`、`medium` 和 `large`，分别占用 `1×1`、`2×1` 和 `2×2` 个单元格。编辑模式让整张卡片都可拖动，把放置位置吸附到空闲单元，提供方向键移动，并通过宿主持久化明确位置；较窄窗口会临时重排，但不会覆盖保存的桌面布局。退出编辑模式后，双击或可见的完整模式按钮会在大尺寸模态框中打开同一个 Widget；按 Escape、关闭按钮或遮罩会返回画布。**新建 Widget**会创建一个受管理的起始项目，并立即把它作为普通 Agent Workspace 打开，同时显示空白会话和实时预览。**和它聊聊**会为已有卡片执行相同交接。受管理路径精确匹配时，空白 Hero 和活跃会话页头都会显示同一个预览开关；工作区级浏览器偏好会在用户以后从普通 Workspace 浏览器进入时恢复右栏，而用户主动关闭后会保持关闭。两个操作都不会发送提示词或启动付费模型请求；用户在普通输入框中描述想要的工具或修改。agent 或外部编辑器写入项目后，宿主文件变更事件会重新加载匹配的 frame，并把已接入 Workspace 的显示标题同步为当前 manifest 名称。
 
@@ -10,6 +28,7 @@
 
 本包没有运行时 Node.js 依赖，也不会为每个 Widget 启动 localhost 服务器。内置计算器离线运行。黄金／美元示例通过宿主桥接加载日线历史，并在提供方不可用时显示错误和重试操作。
 
+<a id="model-experience"></a>
 ## 模型体验
 
 无，因为本包是浏览器端应用容器，不注册提示词、消息、schema、流或工具结果。
@@ -20,6 +39,18 @@
 
 ## 已知限制与暂缓事项
 
+<a id="known-limitations-and-deferred-work"></a>
+
 - **一个已安装项目就是一个画布实例** —— 布局没有独立实例 id，因此重复卡片、停用、移除 UI 和设置仍未实现。
 - **容器层的刷新策略是手动的** —— Widget 可以在 frame 打开时加载数据，但尚未实现 `visible-interval` 调度和陈旧状态持久化。
 - **桥接暴露 GET 风格的 fetch 和受限 JSON 状态** —— 凭证、主题、语言、通知、任意文件和后台执行均不可用。
+
+<a id="dev-note"></a>
+### 开发备注
+
+<details>
+<summary>维护上下文</summary>
+
+不发布不变式伴生入口。Host 操作拥有 Widget 持久状态；浏览器读取操作结果并通过 effect 注册 Slot。
+
+</details>

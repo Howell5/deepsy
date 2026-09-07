@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { WidgetId } from '@deepseek-ai/dsh-widgets'
 import type { WidgetLayoutItem, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 import { arrangeWidgetLayout, placeWidget, widgetCanvasRows } from '../src/client/canvas-layout.ts'
 
@@ -33,7 +34,7 @@ describe('Widget canvas layout', () => {
     const next = placeWidget([
       { id: 'one', size: 'small', column: 0, row: 0 },
       { id: 'two', size: 'small', column: 1, row: 0 },
-    ] as WidgetLayoutItem[], 'two', 'medium', 0, 0, 3)
+    ] as WidgetLayoutItem[], WidgetId('two'), 'medium', 0, 0, 3)
 
     expect(next).toContainEqual({ id: 'one', size: 'small', column: 0, row: 0 })
     expect(next).toContainEqual({ id: 'two', size: 'medium', column: 1, row: 0 })

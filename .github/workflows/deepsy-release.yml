@@ -1,19 +1,4 @@
-# deepsy zero-cost update pipeline.
-#
-# Watches the upstream npm `latest` dist-tag of @deepseek-ai/dsh (upstream
-# publishes no GitHub Releases or git tags; npm is the authoritative stream).
-# When that tag is strictly newer than the version packaged in this workspace,
-# bumps the dsh release family when needed, builds the desktop shell, and
-# publishes a GitHub Release with the macOS artifacts and the latest.json
-# manifest. macOS-first; Windows NSIS and Linux AppImage packaging is follow-up
-# work. The workflow never triggers on push, so routine commits cannot cause a
-# release.
-#
-# Deterministic decisions (no human in the loop):
-# - detection source: npm dist-tag "latest"
-# - comparison: semver strict greater-than (rc-aware)
-# - release tag: v<target>, prerelease when the target is a prerelease
-# - artifacts: ad-hoc signed DMG + ZIP (mac.identity "-" + hardenedRuntime off)
+# Synchronize source, validate the desktop, then publish the exact tested commit.
 name: deepsy-release
 
 on:
@@ -22,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       dry-run:
-        description: Check upstream and report only; build and release nothing.
+        description: Report pending upstream source updates without merging or publishing.
         type: boolean
         default: false
       release-current:
-        description: Build and publish the version already recorded in the workspace.
+        description: Publish the current master version without fetching new upstream source.
         type: boolean
         default: false
 
@@ -39,17 +24,18 @@ concurrency:
 
 env:
   PRIMARY_NODE_VERSION: '24'
-  # No paid signing at launch: electron-builder ad-hoc signs (mac.identity
-  # "-") so Gatekeeper/SmartScreen click-through applies. Leaving auto-
-  # discovery off keeps a stray local keychain identity from hijacking the
-  # zero-cost distribution decision.
   CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
 jobs:
   release:
+    if: github.repository == 'Howell5/deepsy' && github.ref == 'refs/heads/master'
     runs-on: macos-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         with:
@@ -59,82 +45,79 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.PRIMARY_NODE_VERSION }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-
       - run: pnpm install --frozen-lockfile
 
-      - name: Check upstream and set outputs
+      - name: Synchronize upstream source
         id: decision
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { execSync } = require('node:child_process')
-            const run = execSync('node --import tsx/esm scripts/deepsy-update/check-upstream.ts', {
-              encoding: 'utf8',
-            })
-            const decision = JSON.parse(run.trim())
-            if ('${{ inputs.release-current }}' === 'true') {
-              decision.updateAvailable = true
-              decision.target = decision.current
-            }
-            console.log(JSON.stringify(decision, null, 2))
-            core.setOutput('updateAvailable', String(decision.updateAvailable))
-            core.setOutput('target', decision.target ?? '')
-            core.setOutput('current', decision.current)
-            core.setOutput('bumpRequired', String(decision.target !== decision.current))
-
-      - name: No update — nothing to do
-        if: steps.decision.outputs.updateAvailable != 'true'
-        run: echo "current=${{ steps.decision.outputs.current }} is up to date with npm latest; no release."
-
-      - name: Dry run — report only
-        if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run == true
-        run: 'echo "dry-run: upstream ${{ steps.decision.outputs.target }} is newer than ${{ steps.decision.outputs.current }}; no build."'
-
-      - name: Bump dsh release family to target
-        if: steps.decision.outputs.updateAvailable == 'true' && steps.decision.outputs.bumpRequired == 'true' && inputs.dry-run != true
+        env:
+          DRY_RUN: ${{ inputs.dry-run }}
+          RELEASE_CURRENT: ${{ inputs.release-current }}
         run: |
-          TARGET="${{ steps.decision.outputs.target }}"
           git config user.name 'deepsy-release[bot]'
           git config user.email 'deepsy-release[bot]@users.noreply.github.com'
-          pnpm run release:dsh "$TARGET"
+          ARGS=()
+          if [[ "$DRY_RUN" == "true" ]]; then ARGS+=(--dry-run); fi
+          if [[ "$RELEASE_CURRENT" == "true" ]]; then ARGS+=(--release-current); fi
+          node --import tsx/esm scripts/deepsy-update/sync-upstream.ts "${ARGS[@]}"
+
+      - name: Install synchronized dependencies
+        if: steps.decision.outputs.sourceChanged == 'true' && inputs.dry-run != true
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Check desktop integration
+        if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
+        run: |
+          pnpm exec vitest run scripts/deepsy-update apps/desktop/tests packages/widget packages/client/ui-widgets
+          pnpm run test:gui
+          pnpm run doc-sync
+          pnpm run lint
+          pnpm run constraints
 
       - name: Build desktop artifacts
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
         run: |
-          # build:desktop produces lib/web but not installers; package runs
-          # stage + electron-builder and emits DMG/ZIP into apps/desktop/release.
           pnpm run build:desktop
+          pnpm exec vitest run --config vitest.web.config.ts apps/web/tests/built-boot.expected.e2e.ts apps/web/tests/shipped-composition.e2e.ts
           pnpm --filter @deepseek-ai/dsh-desktop run package
 
-      - name: Push version bump
-        if: steps.decision.outputs.updateAvailable == 'true' && steps.decision.outputs.bumpRequired == 'true' && inputs.dry-run != true
-        run: git push origin HEAD
-
-      - name: Create GitHub Release
-        if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
-        id: release
+      - name: Commit and push validated source
+        if: steps.decision.outputs.sourceChanged == 'true' && inputs.dry-run != true
         env:
-          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ steps.decision.outputs.target }}
         run: |
-          TARGET="${{ steps.decision.outputs.target }}"
-          PRERELEASE=""
-          if [[ "$TARGET" == *-* ]]; then PRERELEASE="--prerelease"; fi
-          gh release create "v$TARGET" --title "$TARGET" --generate-notes $PRERELEASE
-          # Deterministic release URL: no second API call, no consistency window.
-          echo "url=https://github.com/${{ github.repository }}/releases/tag/v$TARGET" >> "$GITHUB_OUTPUT"
+          git add -u
+          git diff --cached --check
+          git commit -m "chore(desktop): synchronize upstream and release $TARGET"
+          # A concurrent master update rejects this ordinary fast-forward push.
+          git push origin HEAD:master
 
-      - name: Upload artifacts and latest.json
+      - name: Publish desktop release
         if: steps.decision.outputs.updateAvailable == 'true' && inputs.dry-run != true
         env:
           GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ steps.decision.outputs.target }}
         run: |
-          TARGET="${{ steps.decision.outputs.target }}"
+          COMMIT="$(git rev-parse HEAD)"
+          TAG="v$TARGET"
+          URL="https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          if gh release view "$TAG" --json isDraft --jq .isDraft > release-draft.txt 2>/dev/null; then
+            if [[ "$(cat release-draft.txt)" != "true" ]]; then
+              echo "Release $TAG is already published; refusing to replace its assets."
+              exit 1
+            fi
+            DRAFT_TARGET="$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)"
+            test "$DRAFT_TARGET" = "$COMMIT"
+          else
+            gh release create "$TAG" --target "$COMMIT" --title "$TARGET" --generate-notes --draft
+          fi
           node --import tsx/esm scripts/deepsy-update/write-latest-json.ts \
-            --version="$TARGET" \
-            --release-url="${{ steps.release.outputs.url }}" \
+            --version="$TARGET" --release-url="$URL" \
             --output=apps/desktop/dist/release/latest.json
-          gh release upload "v$TARGET" apps/desktop/dist/release/*.dmg apps/desktop/dist/release/*.zip apps/desktop/dist/release/latest.json --clobber
+          gh release upload "$TAG" apps/desktop/dist/release/*.dmg \
+            apps/desktop/dist/release/*.zip apps/desktop/dist/release/latest.json --clobber
+          if [[ "$TARGET" == *-* ]]; then
+            gh release edit "$TAG" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --draft=false --prerelease=false --latest
+          fi
+          echo "Published [$TARGET]($URL) from $COMMIT" >> "$GITHUB_STEP_SUMMARY"

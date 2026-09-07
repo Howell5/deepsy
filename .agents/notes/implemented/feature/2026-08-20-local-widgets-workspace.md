@@ -38,7 +38,7 @@ Each installed Widget owns one bounded JSON object under `$DSH_HOME/widgets/proj
 |---|---|
 | `packages/widget/widgets` | Service Definition, strict manifest/state/layout parsers, branded ids, operations, and stable errors |
 | `packages/widget/widgets-local` | Managed project and Host-owned data storage, built-in examples, path validation, file-change publication, and external request policy |
-| `packages/host/apiproxy` | Typed Widget lifecycle, state, layout, and fetch RPC methods plus carrier schemas |
+| `packages/widget/widgets-local/src/controller.ts` | Generated `widgets` Remote namespace for lifecycle, state, layout, fetch, and native folder reveal |
 | `packages/client/ui-widgets` | Sidebar entry, snapped canvas, Agent editing handoff, live preview, isolated frames, and frame-to-Host bridge |
 | `packages/client/ui-layout`, `packages/client/ui-sidebar`, and `packages/client/ui-conversation` | Generic root/details application selection plus Session-header and blank-Hero utility slots |
 
@@ -46,7 +46,7 @@ The Service Definition contains no UI or transport assumptions. The UI reads pro
 
 ## Verification
 
-Provider tests cover starter creation, expanded-mode authoring rules, example seeding, static project import, duplicate rejection, state and layout persistence outside project files, undeclared network denial, watcher invalidation, and watcher disposal. Client tests cover logical placement, collision avoidance, semantic resizing, keyboard movement persistence, display-mode injection, expanded open and Escape close, Workspace reuse, adoption, manifest-name synchronization, and preview preference persistence for Agent editing. The built Web journey opens and closes expanded presentation, creates a starter, enters its blank Session with the preview open, then covers the same handoff and preview restoration for an existing Widget. API carrier tests exercise Widget request and response serialization through the real fetch handler. Client and Host aggregate TypeScript programs include every package, and the shipped Web/desktop composition mounts the provider and UI together.
+Provider tests cover starter creation, expanded-mode authoring rules, example seeding, static project import, duplicate rejection, state and layout persistence outside project files, undeclared network denial, watcher invalidation, and watcher disposal. Client tests cover logical placement, collision avoidance, semantic resizing, keyboard movement persistence, display-mode injection, expanded open and Escape close, Workspace reuse, adoption, manifest-name synchronization, and preview preference persistence for Agent editing. The built Web journey opens and closes expanded presentation, creates a starter, enters its blank Session with the preview open, then covers the same handoff and preview restoration for an existing Widget through the generated Remote client. Controller tests verify durable state, layout, permission checks, and removal against the local provider. Client and Host aggregate TypeScript programs include every package, and the shipped Web/desktop composition mounts the provider and UI together.
 
 ## Alternatives considered
 

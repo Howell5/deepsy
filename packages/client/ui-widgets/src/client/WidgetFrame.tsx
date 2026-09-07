@@ -1,5 +1,6 @@
+import type { WidgetApi } from './api.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { IApiClient, WidgetSize, WidgetState, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { WidgetSize, WidgetState, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconCloseOutline16, IconEllipsisOutline16,
   IconFolderOpenOutline16, IconFullscreenOutline16, IconRefreshOutline16, Menu,
@@ -13,7 +14,7 @@ import css from './WidgetsWorkspace.module.css'
 export type WidgetChangeSubscriber = (listener: (id: string) => void) => () => void
 
 interface WidgetFrameProps {
-  api: IApiClient
+  api: WidgetApi
   widget: WidgetView
   size: WidgetSize
   t: (key: WidgetsKey) => string
@@ -81,7 +82,8 @@ export function WidgetFrame({
     setHtml(undefined)
     setError(undefined)
     setLayoutError(undefined)
-    api.widgets.read({ id }, abort.signal).then(({ result }) => {
+    api.widgets.read(id).then((result) => {
+      if (abort.signal.aborted) return
       if (!result.ok) throw new Error(result.error.message)
       setHtml(instrumentWidgetHtml(result.value.html, displayMode))
     }).catch((cause: unknown) => {
@@ -123,12 +125,12 @@ export function WidgetFrame({
     const operation = async (): Promise<unknown> => {
       if (message.method === 'fetch') {
         if (typeof message.url !== 'string') throw new Error('Widget fetch URL must be a string')
-        const { result } = await api.widgets.fetch({ id, url: message.url })
+        const result = await api.widgets.fetch(id, message.url)
         if (!result.ok) throw new Error(result.error.message)
         return result.value
       }
       if (message.method === 'state.read') {
-        const { result } = await api.widgets.stateRead({ id })
+        const result = await api.widgets.stateRead(id)
         if (!result.ok) throw new Error(result.error.message)
         return result.value.state
       }
@@ -136,7 +138,7 @@ export function WidgetFrame({
         if (typeof message.state !== 'object' || message.state === null || Array.isArray(message.state)) {
           throw new Error('Widget state must be a JSON object')
         }
-        const { result } = await api.widgets.stateWrite({ id, state: message.state as WidgetState })
+        const result = await api.widgets.stateWrite(id, message.state as WidgetState)
         if (!result.ok) throw new Error(result.error.message)
         return undefined
       }
@@ -162,7 +164,7 @@ export function WidgetFrame({
   )
 
   const openSource = (): void => {
-    void api.host.openPath({ path: widget.sourcePath })
+    void api.widgets.openFolder(widget.manifest.id)
     setMenuOpen(false)
   }
 

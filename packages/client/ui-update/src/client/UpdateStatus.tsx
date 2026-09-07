@@ -17,6 +17,8 @@ import css from './UpdateStatus.module.css'
 export interface UpdateStatusProps {
   /** Version packaged in the running app. */
   currentVersion: string
+  /** Localized update label with a `{version}` placeholder. */
+  t: (key: 'available') => string
 }
 
 type Status = 'checking' | 'latest' | 'available'
@@ -24,6 +26,7 @@ type Status = 'checking' | 'latest' | 'available'
 /** Render one update indicator. */
 export function UpdateStatus({
   currentVersion,
+  t,
   fetchReleases = fetchDeepsyReleases,
 }: UpdateStatusProps & { fetchReleases?: () => Promise<readonly DeepsyRelease[]> }) {
   const [status, setStatus] = useState<Status>('checking')
@@ -60,7 +63,7 @@ export function UpdateStatus({
       data-testid="update-available"
     >
       <span className={css.dot} aria-hidden="true" />
-      <span>新版本 v{latest} 可用</span>
+      <span>{t('available').replace('{version}', latest)}</span>
       <span className={css.arrow} aria-hidden="true">→</span>
     </a>
   )

@@ -1,5 +1,5 @@
+import type { WidgetApi } from './api.ts'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
-import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
 import { IconPanelLeftOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -8,7 +8,7 @@ import { isWidgetPreviewPreferred, setWidgetPreviewPreferred } from './preview-p
 import css from './WidgetPreviewToggle.module.css'
 
 interface WidgetPreviewToggleInjected {
-  api: IApiClient
+  api: WidgetApi
   layout: ILayout
 }
 
@@ -61,7 +61,7 @@ export function WidgetPreviewToggle({
     if (sourcePath === undefined) return
     const abort = new AbortController()
     setMatchedSourcePath(undefined)
-    api.widgets.list({}, abort.signal).then(({ result }) => {
+    api.widgets.list().then((result) => {
       if (!result.ok) return
       const match = result.value.widgets.some(widget => widget.sourcePath === sourcePath)
       if (!abort.signal.aborted) setMatchedSourcePath(match ? sourcePath : undefined)

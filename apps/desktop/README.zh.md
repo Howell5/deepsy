@@ -27,3 +27,5 @@ pnpm run package:desktop
 首版桌面载体通过随机回环端口复用已经验证的 HTTP/WebSocket Web profile。后端进程与桌面主进程隔离，端口不会监听到回环之外，但本机其他进程仍可能探测它。后续生产硬化会把载体替换为已经规划的 IPC 传输；该改动不需要重写产品 UI。
 
 Electron 会在打包应用中阻止 Node internals 标志，因此此界面不启用 profile patch 实时监听。编辑 profile patch 后需要重启 deepsy。
+
+桌面壳保留后端就绪 URL 中的认证令牌，并关闭 CLI 的外部浏览器启动。[发布工作流](../../.github/workflows/deepsy-release.yml) 每六小时检查上游 Git 历史；它合并源码并验证桌面端后才发布新包。源码冲突或检查失败会停止发布。

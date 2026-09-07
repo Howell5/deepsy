@@ -1,8 +1,26 @@
+---
+description: "deepsy 设置页的版本检测与下载链接。"
+kind: "package-reference"
+---
 # @deepseek-ai/dsh-client-ui-update
 
 [English](README.md) | 中文
 
+## 概述
+
 deepsy 桌面壳的设置页底部更新提示。
+
+## 目录
+
+- [使用与行为](#use-and-behavior)
+- [模型体验](#model-experience)
+- [已知限制与待办](#known-limitations-and-deferred-work)
+- [开发备注](#dev-note)
+
+-----
+
+<a id="use-and-behavior"></a>
+## 使用与行为
 
 ## 用途
 
@@ -14,6 +32,7 @@ deepsy 桌面壳的设置页底部更新提示。
 - 当前版本：`settings.footer` owner 属性 `currentVersion`，由设置壳从桌面启动页的 `<meta name="dsh-version">` 注入。纯 Web 模式没有 meta 标签，回退为 `0.0.0`，因此不显示更新提示。
 - 比较：npm `semver` 严格大于，感知 rc。
 
+<a id="model-experience"></a>
 ## 模型体验
 
 无，因为浏览器侧 release 提示永远不会进入模型请求。
@@ -24,5 +43,17 @@ deepsy 桌面壳的设置页底部更新提示。
 
 ## 已知限制与待办
 
-- 产品文案为内联中文；本地化提取延后。
+<a id="known-limitations-and-deferred-work"></a>
+
+- 更新提示跟随应用语言，支持英文和中文；其他语言尚不可用。
 - 纯 Web 模式无法知道打包版本（没有 meta 标签），因此无法提供可靠的更新比较。
+
+<a id="dev-note"></a>
+### 开发备注
+
+<details>
+<summary>维护上下文</summary>
+
+不发布不变式伴生入口。Slot 与 locale 注册表拥有贡献项的生命周期；更新提示不保留 Host 状态。
+
+</details>

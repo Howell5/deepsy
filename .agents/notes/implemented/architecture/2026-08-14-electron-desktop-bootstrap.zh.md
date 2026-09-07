@@ -20,7 +20,7 @@ DeepSeek Harness 已有完整的浏览器产品，但当前使用方式假设用
 
 **打包实体化的生产依赖闭包。** Electron Builder 创建 DMG/ZIP、NSIS 或 AppImage 产物前，`pnpm deploy --prod` 会暂存桌面包及所有 workspace 运行时依赖。应用资源保持未封装状态：Utility Process 需要实体入口文件，而启动版本会直接 fork CLI 入口。因此平台签名属于发行边界，不把 ASAR 当作完整性机制。
 
-本决策部分取代 [GUI 分层与 RPC 协议](2026-07-19-gui-layering-and-rpc-protocol.zh.md) 中的 Electron 载体部分：IPC 载体仍是生产硬化目标，但不再是首个桌面可执行文件的前置条件。启动版本暂时在操作系统分配的回环端口上复用 `dsh-host-webserver`。
+桌面启动在操作系统分配的回环端口上复用 [Web 客户端架构](../../../../docs/subsystems/web-client.zh.md)。它传入 `--no-open`，并保留完整就绪 URL 中的认证查询参数，使 Electron 而非外部浏览器打开已认证的客户端。
 
 ## Alternatives considered
 

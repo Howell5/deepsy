@@ -1,5 +1,6 @@
+import type { WidgetApi } from './api.ts'
 import { useEffect, useState } from 'react'
-import type { IApiClient, WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { WidgetView } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { WIDGET_DETAILS_APPLICATION } from './editing.ts'
@@ -8,7 +9,7 @@ import { WidgetFrame, type WidgetChangeSubscriber } from './WidgetFrame.tsx'
 import css from './WidgetsWorkspace.module.css'
 
 interface WidgetDetailsInjected {
-  api: IApiClient
+  api: WidgetApi
   layout: ILayout
   subscribeChanges: WidgetChangeSubscriber
 }
@@ -37,7 +38,8 @@ export function WidgetDetails({
     const abort = new AbortController()
     setWidget(undefined)
     setError(undefined)
-    api.widgets.list({}, abort.signal).then(({ result }) => {
+    api.widgets.list().then((result) => {
+      if (abort.signal.aborted) return
       if (!result.ok) throw new Error(result.error.message)
       const match = result.value.widgets.find(candidate => candidate.sourcePath === sourcePath)
       if (match === undefined) throw new Error(t('previewNotFound'))
